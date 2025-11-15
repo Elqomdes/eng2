@@ -213,6 +213,75 @@ export default function SpeakingPage() {
     }
   }, [mediaRecorder, isRecording])
 
+  // Recording timer effect
+  useEffect(() => {
+    if (!currentExercise || !currentExercise.duration) return
+    
+    if (isRecording) {
+      intervalRef.current = setInterval(() => {
+        setTimeElapsed(prev => {
+          const currentDuration = currentExercise?.duration
+          if (currentDuration && typeof prev === 'number' && prev >= currentDuration) {
+            stopRecording()
+            return currentDuration
+          }
+          if (typeof prev === 'number' && !isNaN(prev)) {
+            return prev + 1
+          }
+          return 0
+        })
+      }, 1000)
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [isRecording, currentExercise, stopRecording])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Cleanup interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      
+      // Cleanup audio URL
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl)
+      }
+      
+      // Cleanup media recorder
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        try {
+          mediaRecorder.stop()
+        } catch (error) {
+          console.error('Error stopping mediaRecorder on unmount:', error)
+        }
+      }
+      
+      // Cleanup stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
+        streamRef.current = null
+      }
+    }
+  }, [audioUrl, mediaRecorder])
+
+  // Calculate progress (moved before early returns)
+  const progress = currentExercise && currentExercise.duration && typeof timeElapsed === 'number' && !isNaN(timeElapsed)
+    ? Math.min(100, Math.max(0, (timeElapsed / currentExercise.duration) * 100))
+    : 0
+
   if (isLoading && !currentExercise) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -246,38 +315,6 @@ export default function SpeakingPage() {
   if (!currentExercise) {
     return <div className="container mx-auto px-4 py-8">Yükleniyor...</div>
   }
-
-  useEffect(() => {
-    if (!currentExercise || !currentExercise.duration) return
-    
-    if (isRecording) {
-      intervalRef.current = setInterval(() => {
-        setTimeElapsed(prev => {
-          const currentDuration = currentExercise?.duration
-          if (currentDuration && typeof prev === 'number' && prev >= currentDuration) {
-            stopRecording()
-            return currentDuration
-          }
-          if (typeof prev === 'number' && !isNaN(prev)) {
-            return prev + 1
-          }
-          return 0
-        })
-      }, 1000)
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-    }
-  }, [isRecording, currentExercise, stopRecording])
 
   const startRecording = async () => {
     try {
@@ -448,41 +485,6 @@ export default function SpeakingPage() {
       setEvaluating(false)
     }
   }
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      // Cleanup interval
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-      
-      // Cleanup audio URL
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl)
-      }
-      
-      // Cleanup media recorder
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        try {
-          mediaRecorder.stop()
-        } catch (error) {
-          console.error('Error stopping mediaRecorder on unmount:', error)
-        }
-      }
-      
-      // Cleanup stream
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop())
-        streamRef.current = null
-      }
-    }
-  }, [audioUrl, mediaRecorder])
-
-  const progress = currentExercise && currentExercise.duration && typeof timeElapsed === 'number' && !isNaN(timeElapsed)
-    ? Math.min(100, Math.max(0, (timeElapsed / currentExercise.duration) * 100))
-    : 0
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
