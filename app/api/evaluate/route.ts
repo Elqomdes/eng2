@@ -347,31 +347,69 @@ Format your response as JSON with the following structure:
   } catch (error: any) {
     console.error('Evaluation error:', error)
     
+    // Handle OpenAI API errors - check multiple possible error structures
+    const statusCode = error?.status || error?.statusCode || error?.response?.status || error?.response?.statusCode
+    
+    if (statusCode === 429) {
+      return NextResponse.json(
+        { error: 'OpenAI API kotası aşıldı. Lütfen OpenAI hesabınızın faturalama ayarlarını kontrol edin ve tekrar deneyin.' },
+        { status: 429 }
+      )
+    }
+    
+    if (statusCode === 401) {
+      return NextResponse.json(
+        { error: 'OpenAI API anahtarı geçersiz. Lütfen API anahtarınızı kontrol edin.' },
+        { status: 401 }
+      )
+    }
+    
+    if (statusCode === 500 || statusCode === 503) {
+      return NextResponse.json(
+        { error: 'OpenAI servisi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.' },
+        { status: 503 }
+      )
+    }
+    
     // Handle specific OpenAI errors
     if (error instanceof Error) {
+      const errorMessage = error.message || ''
+      
+      // Check for quota exceeded in error message (case insensitive)
+      if (errorMessage.toLowerCase().includes('quota') || 
+          errorMessage.toLowerCase().includes('billing') || 
+          errorMessage.toLowerCase().includes('exceeded') ||
+          errorMessage.includes('429')) {
+        return NextResponse.json(
+          { error: 'OpenAI API kotası aşıldı. Lütfen OpenAI hesabınızın faturalama ayarlarını kontrol edin ve tekrar deneyin.' },
+          { status: 429 }
+        )
+      }
+      
       // Network/Connection errors
-      if (error.message.includes('fetch') || 
-          error.message.includes('network') || 
-          error.message.includes('ECONNREFUSED') ||
-          error.message.includes('ENOTFOUND') ||
-          error.message.includes('ETIMEDOUT') ||
-          error.message.includes('timeout') ||
-          error.name === 'TypeError' && error.message.includes('fetch')) {
+      if (errorMessage.includes('fetch') || 
+          errorMessage.includes('network') || 
+          errorMessage.includes('ECONNREFUSED') ||
+          errorMessage.includes('ENOTFOUND') ||
+          errorMessage.includes('ETIMEDOUT') ||
+          errorMessage.includes('timeout') ||
+          error.name === 'TypeError' && errorMessage.includes('fetch')) {
         return NextResponse.json(
           { error: 'Bağlantı hatası. Lütfen internet bağlantınızı veya VPN ayarlarınızı kontrol edin ve tekrar deneyin.' },
           { status: 503 }
         )
       }
       
-      if (error.message.includes('API key') || error.message.includes('authentication')) {
+      if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
         return NextResponse.json(
-          { error: 'Invalid OpenAI API key. Please check your configuration.' },
+          { error: 'OpenAI API anahtarı geçersiz. Lütfen API anahtarınızı kontrol edin.' },
           { status: 401 }
         )
       }
-      if (error.message.includes('rate limit')) {
+      
+      if (errorMessage.includes('rate limit')) {
         return NextResponse.json(
-          { error: 'Rate limit exceeded. Please try again later.' },
+          { error: 'OpenAI API kotası aşıldı. Lütfen daha sonra tekrar deneyin.' },
           { status: 429 }
         )
       }
