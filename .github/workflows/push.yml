@@ -1,0 +1,21 @@
+# Bu workflow sadece bu projeyi pushlamak için kullanılır
+# Farklı dizinlerdeki dosyaları pushlamaz
+
+name: Push to GitHub
+
+on:
+  workflow_dispatch:
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Push to GitHub
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git push origin main
+
