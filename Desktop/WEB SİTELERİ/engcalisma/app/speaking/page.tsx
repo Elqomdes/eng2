@@ -458,33 +458,35 @@ export default function SpeakingPage() {
               </div>
 
               <div className="space-y-4">
-                {/* Pronunciation */}
+                {/* Task Completion */}
                 <div className="border rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">🗣️ Telaffuz</h4>
-                  <p className="text-sm text-gray-700 mb-2">{evaluation.pronunciation.assessment}</p>
-                  {evaluation.pronunciation.strengths.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-xs font-medium text-green-600 mb-1">Güçlü Yönler:</p>
-                      <ul className="text-xs text-gray-600 space-y-1">
-                        {evaluation.pronunciation.strengths.map((strength, i) => (
-                          <li key={i}>✓ {strength}</li>
-                        ))}
-                      </ul>
-                    </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-gray-900">✅ Görev Tamamlama</h4>
+                    <span className="text-sm font-bold text-orange-600">{evaluation.taskCompletion.score}/5</span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-2">{evaluation.taskCompletion.assessment}</p>
+                  {evaluation.taskCompletion.contentDevelopment && (
+                    <p className="text-xs text-gray-600 mb-1">İçerik Geliştirme: {evaluation.taskCompletion.contentDevelopment}</p>
                   )}
-                </div>
-
-                {/* Fluency */}
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">💬 Akıcılık</h4>
-                  <p className="text-sm text-gray-700 mb-2">{evaluation.fluency.assessment}</p>
-                  <p className="text-xs text-gray-600">Hız: {evaluation.fluency.pace}</p>
+                  {evaluation.taskCompletion.organization && (
+                    <p className="text-xs text-gray-600 mb-1">Organizasyon: {evaluation.taskCompletion.organization}</p>
+                  )}
+                  {evaluation.taskCompletion.summaryQuality && (
+                    <p className="text-xs text-gray-600 mb-1">Özet Kalitesi: {evaluation.taskCompletion.summaryQuality}</p>
+                  )}
+                  {evaluation.taskCompletion.discussionQuality && (
+                    <p className="text-xs text-gray-600 mb-1">Tartışma Kalitesi: {evaluation.taskCompletion.discussionQuality}</p>
+                  )}
                 </div>
 
                 {/* Grammar */}
                 <div className="border rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">📝 Dilbilgisi</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-gray-900">📝 Dilbilgisi</h4>
+                    <span className="text-sm font-bold text-orange-600">{evaluation.grammar.score}/5</span>
+                  </div>
                   <p className="text-sm text-gray-700 mb-2">{evaluation.grammar.assessment}</p>
+                  <p className="text-xs text-gray-600 mb-2">Karmaşık Yapılar: {evaluation.grammar.complexStructures}</p>
                   {evaluation.grammar.errors.length > 0 && (
                     <div className="mt-2">
                       <p className="text-xs font-medium text-red-600 mb-1">Hatalar:</p>
@@ -495,6 +497,34 @@ export default function SpeakingPage() {
                       </ul>
                     </div>
                   )}
+                </div>
+
+                {/* Vocabulary */}
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-gray-900">📚 Kelime Bilgisi</h4>
+                    <span className="text-sm font-bold text-orange-600">{evaluation.vocabulary.score}/5</span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-2">{evaluation.vocabulary.assessment}</p>
+                  <p className="text-xs text-gray-600 mb-1">Kelime Çeşitliliği: {evaluation.vocabulary.range}</p>
+                  {evaluation.vocabulary.accuracy && (
+                    <p className="text-xs text-gray-600 mb-1">Doğruluk: {evaluation.vocabulary.accuracy}</p>
+                  )}
+                  {evaluation.vocabulary.videoVocabulary && (
+                    <p className="text-xs text-gray-600 mb-1">Video Kelimeleri: {evaluation.vocabulary.videoVocabulary}</p>
+                  )}
+                </div>
+
+                {/* Fluency & Pronunciation */}
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-gray-900">💬 Akıcılık ve Telaffuz</h4>
+                    <span className="text-sm font-bold text-orange-600">{evaluation.fluency.score}/5</span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-2">{evaluation.fluency.assessment}</p>
+                  <p className="text-xs text-gray-600 mb-1">Hız: {evaluation.fluency.pace}</p>
+                  <p className="text-xs text-gray-600 mb-1">Tereddütler: {evaluation.fluency.hesitations}</p>
+                  <p className="text-xs text-gray-600">Telaffuz: {evaluation.fluency.pronunciation}</p>
                 </div>
 
                 {/* Overall Feedback */}

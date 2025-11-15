@@ -58,6 +58,38 @@ const speakingExercises: SpeakingExercise[] = [
       'Use examples to support your points',
       'Consider counterarguments'
     ]
+  },
+  {
+    id: 4,
+    title: 'Independent Speaking - Express Opinion',
+    level: 'B2',
+    prompt: 'Do you think social media has more positive or negative effects on society? Explain your position with reasons and examples. Consider aspects such as communication, relationships, information sharing, and mental health.',
+    example: 'In my opinion... I believe this because... For example... On the other hand...',
+    duration: 120,
+    tips: [
+      'State your position clearly at the beginning',
+      'Provide at least 2-3 strong reasons',
+      'Use specific examples to support your points',
+      'Consider both sides of the argument',
+      'Use connecting words (however, furthermore, in addition)',
+      'Speak for the full duration'
+    ]
+  },
+  {
+    id: 5,
+    title: 'Integrated Speaking - Video Response',
+    level: 'C1',
+    prompt: 'Watch this video about sustainable living practices (transcript provided below). First, summarize the main points discussed in the video. Then, discuss your thoughts on these practices and how they could be implemented in your community.\n\nVIDEO TRANSCRIPT:\n"Sustainable living involves making choices that reduce our environmental impact. Key practices include reducing energy consumption, minimizing waste, choosing sustainable products, and supporting local economies. Simple changes like using LED bulbs, reducing water usage, and buying locally-produced food can make a significant difference. Communities that adopt these practices often see benefits in both environmental health and economic savings."',
+    example: 'The video discusses... The main points are... In my opinion... I think this could be implemented by...',
+    duration: 180,
+    tips: [
+      'First, provide a comprehensive summary of the video content',
+      'Then, discuss and reflect on the topic',
+      'Use vocabulary from the video appropriately',
+      'Extend beyond simply restating the video content',
+      'Provide new insights or perspectives',
+      'Organize your response clearly'
+    ]
   }
 ]
 
@@ -573,5 +605,3 @@ export default function SpeakingPage() {
     </div>
   )
 }
-
-

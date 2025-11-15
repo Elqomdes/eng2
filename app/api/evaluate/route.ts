@@ -5,11 +5,14 @@ import OpenAI from 'openai'
 export const runtime = 'nodejs'
 export const maxDuration = 60 // 60 seconds max duration for Vercel
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  timeout: 60000, // 60 second timeout
-  maxRetries: 2, // Retry up to 2 times on failure
-})
+// Lazy initialization to avoid build-time errors when API key is missing
+function getOpenAIClient() {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    timeout: 60000, // 60 second timeout
+    maxRetries: 2, // Retry up to 2 times on failure
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -289,6 +292,7 @@ Format your response as JSON with the following structure:
       )
     }
 
+    const openai = getOpenAIClient()
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [

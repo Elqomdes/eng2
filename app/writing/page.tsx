@@ -55,6 +55,58 @@ const writingPrompts: WritingPrompt[] = [
       'Express your opinion clearly'
     ],
     wordCount: 300
+  },
+  {
+    id: 4,
+    title: 'Social Media Post Response',
+    level: 'B1/B2',
+    prompt: `Read the following social media post and comment, then write your own comment in response.
+
+POST:
+"Just finished reading an amazing book about climate change. It really opened my eyes to how our daily choices impact the environment. What small changes have you made to be more eco-friendly? 🌱"
+
+COMMENT:
+"I've started using a reusable water bottle and bringing my own shopping bags. Every little bit helps! What book was it?"
+
+Write your own comment (at least 80-120 words) responding to both the post and the comment. Express your opinion and share your own experiences.`,
+    tips: [
+      'Refer to both the post and the comment in your response',
+      'Express your personal opinion clearly',
+      'Share your own experiences or examples',
+      'Use appropriate social media language',
+      'Write at least 80 words'
+    ],
+    wordCount: 80
+  },
+  {
+    id: 5,
+    title: 'Graph and Podcast Integration',
+    level: 'C1',
+    prompt: `Task: Examine the graph below and listen to the podcast (transcript provided). Then write a text that connects information from both sources.
+
+GRAPH DATA:
+- Renewable Energy Usage (2010-2023)
+- 2010: 15%
+- 2015: 22%
+- 2020: 35%
+- 2023: 48%
+
+PODCAST TRANSCRIPT:
+"Renewable energy adoption has accelerated significantly over the past decade. Solar and wind power have become increasingly cost-effective, making them competitive with traditional fossil fuels. Government incentives and environmental awareness have driven this growth. However, challenges remain in energy storage and grid infrastructure. Experts predict that by 2030, renewable energy could account for over 60% of total energy production in many countries."
+
+Write a text (at least 200 words) that:
+1. Summarizes the main points from the podcast
+2. Connects them with the data shown in the graph
+3. Discusses the implications and future trends`,
+    tips: [
+      'Effectively summarize the three main points from the podcast',
+      'Make clear connections between the podcast and graph data',
+      'Use sophisticated vocabulary from both sources',
+      'Organize your writing with clear paragraphs',
+      'Write at least 200 words',
+      'Use appropriate linking words and complex structures'
+    ],
+    wordCount: 200
   }
 ]
 

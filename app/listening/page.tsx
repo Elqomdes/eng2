@@ -139,6 +139,135 @@ Candidate: Yes, I'd like to know more about the team structure and what opportun
       }
     ],
     duration: 60
+  },
+  {
+    id: 3,
+    title: 'University Discussion',
+    level: 'B2',
+    transcript: `Professor: Today we're discussing different learning styles. Let me hear from each of you about your preferred method.
+
+Student 1: I find that I learn best when I can see information visually. Charts, diagrams, and videos really help me understand complex concepts. I often create mind maps to organize my thoughts.
+
+Student 2: For me, listening is key. I prefer lectures and discussions where I can hear explanations. I also like to read my notes aloud when studying. Audio recordings of lectures are my favorite study tool.
+
+Student 3: I'm a hands-on learner. I need to actually do things to understand them. Lab work, experiments, and practical exercises work best for me. I struggle with purely theoretical learning.
+
+Student 4: I learn through reading and writing. I take detailed notes and rewrite information in my own words. Textbooks and written materials are my primary learning resources.`,
+    questions: [
+      {
+        id: 7,
+        type: 'matching' as const,
+        instruction: 'Match each student with their preferred learning style.',
+        speakers: ['Student 1', 'Student 2', 'Student 3', 'Student 4'],
+        statements: [
+          'Prefers visual learning with charts and diagrams',
+          'Learns best through listening and audio',
+          'Needs hands-on practical experience',
+          'Learns through reading and writing'
+        ],
+        matches: { 0: 0, 1: 1, 2: 2, 3: 3 }
+      },
+      {
+        id: 8,
+        type: 'multiple-choice' as const,
+        question: 'What does Student 1 use to organize thoughts?',
+        options: [
+          'Audio recordings',
+          'Mind maps',
+          'Textbooks',
+          'Lab work'
+        ],
+        correct: 1
+      },
+      {
+        id: 9,
+        type: 'multiple-choice' as const,
+        question: 'What is Student 3\'s main challenge?',
+        options: [
+          'Visual learning',
+          'Theoretical learning',
+          'Audio learning',
+          'Reading comprehension'
+        ],
+        correct: 1
+      }
+    ],
+    duration: 90
+  },
+  {
+    id: 4,
+    title: 'Academic Lecture',
+    level: 'C1',
+    transcript: `Professor: Today's lecture focuses on cognitive psychology and memory formation. Memory is not a single process but involves multiple systems working together. We have sensory memory, which holds information for less than a second, short-term memory that can retain information for about 20-30 seconds, and long-term memory which can store information indefinitely.
+
+The process of transferring information from short-term to long-term memory is called consolidation. This process can be enhanced through various techniques such as repetition, association, and emotional connection. Research shows that information connected to strong emotions is more likely to be remembered.
+
+However, memory is not perfect. We often forget information, and sometimes we remember things incorrectly. This is due to various factors including interference from other memories, decay over time, and reconstruction errors where we fill in gaps with plausible but incorrect information.
+
+Understanding how memory works can help us develop better learning strategies and improve our ability to retain and recall information effectively.`,
+    questions: [
+      {
+        id: 10,
+        type: 'multiple-choice' as const,
+        question: 'How long can short-term memory retain information?',
+        options: [
+          'Less than a second',
+          'About 20-30 seconds',
+          'Several minutes',
+          'Indefinitely'
+        ],
+        correct: 1
+      },
+      {
+        id: 11,
+        type: 'multiple-choice' as const,
+        question: 'What is the process of transferring information to long-term memory called?',
+        options: [
+          'Reconstruction',
+          'Consolidation',
+          'Interference',
+          'Decay'
+        ],
+        correct: 1
+      },
+      {
+        id: 12,
+        type: 'multiple-choice' as const,
+        question: 'According to the lecture, what type of information is more likely to be remembered?',
+        options: [
+          'Information repeated many times',
+          'Information connected to strong emotions',
+          'Information learned recently',
+          'Information that is simple'
+        ],
+        correct: 1
+      },
+      {
+        id: 13,
+        type: 'multiple-choice' as const,
+        question: 'What is NOT mentioned as a factor affecting memory accuracy?',
+        options: [
+          'Interference from other memories',
+          'Decay over time',
+          'Reconstruction errors',
+          'Lack of sleep'
+        ],
+        correct: 3
+      },
+      {
+        id: 14,
+        type: 'multiple-choice' as const,
+        question: 'What is the main purpose of understanding memory processes?',
+        options: [
+          'To prevent forgetting',
+          'To develop better learning strategies',
+          'To improve emotional connections',
+          'To reduce interference'
+        ],
+        correct: 1
+      }
+    ],
+    duration: 120
   }
 ]
 

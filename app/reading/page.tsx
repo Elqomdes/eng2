@@ -144,12 +144,107 @@ Addressing climate change requires global cooperation. Countries must work toget
         correct: 1
       }
     ]
+  },
+  {
+    id: 3,
+    title: 'The Art of Communication',
+    level: 'B1',
+    content: `Paragraph A: Effective communication is essential in both personal and professional settings. It involves not just speaking, but also listening actively to what others are saying. Good communicators pay attention to body language, tone of voice, and the context of the conversation.
+
+Paragraph B: In the workplace, clear communication can prevent misunderstandings and improve productivity. When team members communicate effectively, projects run more smoothly and deadlines are met more consistently. Regular meetings and open dialogue help maintain this communication flow.
+
+Paragraph C: Technology has transformed how we communicate. Email, instant messaging, and video calls have made it easier to stay connected with people around the world. However, face-to-face communication still remains the most effective method for building strong relationships.
+
+Paragraph D: Learning to communicate well takes practice. It requires patience, empathy, and the ability to see things from another person's perspective. By improving our communication skills, we can build better relationships and achieve greater success in all areas of life.`,
+    questions: [
+      {
+        id: 7,
+        type: 'matching' as const,
+        instruction: 'Match each statement with the correct paragraph (A, B, C, or D).',
+        items: [
+          'The importance of active listening',
+          'The impact of technology on communication',
+          'How communication improves work efficiency',
+          'The need for practice in communication'
+        ],
+        paragraphs: ['Paragraph A', 'Paragraph B', 'Paragraph C', 'Paragraph D'],
+        matches: { 0: 0, 1: 2, 2: 1, 3: 3 }
+      },
+      {
+        id: 8,
+        type: 'multiple-choice' as const,
+        question: 'According to Paragraph C, what is still the most effective communication method?',
+        options: [
+          'Email',
+          'Video calls',
+          'Face-to-face communication',
+          'Instant messaging'
+        ],
+        correct: 2
+      },
+      {
+        id: 9,
+        type: 'multiple-choice' as const,
+        question: 'What does Paragraph D suggest is needed to improve communication?',
+        options: [
+          'Technology',
+          'Practice and empathy',
+          'More meetings',
+          'Better technology'
+        ],
+        correct: 1
+      }
+    ]
+  },
+  {
+    id: 4,
+    title: 'The Future of Education',
+    level: 'B2',
+    content: `The education system is undergoing significant changes as we move further into the 21st century. Traditional classroom settings are being supplemented and sometimes replaced by online learning platforms, interactive technologies, and personalized learning approaches.`,
+    questions: [
+      {
+        id: 10,
+        type: 'ordering' as const,
+        instruction: 'Arrange the following sentences to form a coherent paragraph about online learning.',
+        parts: [
+          'This flexibility allows students to learn at their own pace and review materials as needed.',
+          'Online learning has become increasingly popular in recent years.',
+          'However, it also requires self-discipline and motivation from students.',
+          'It offers flexibility that traditional classroom settings cannot always provide.'
+        ],
+        correctOrder: [1, 3, 0, 2]
+      },
+      {
+        id: 11,
+        type: 'multiple-choice' as const,
+        question: 'What is one advantage of online learning mentioned in the text?',
+        options: [
+          'It requires less self-discipline',
+          'It allows learning at your own pace',
+          'It is always easier than traditional learning',
+          'It doesn\'t require motivation'
+        ],
+        correct: 1
+      },
+      {
+        id: 12,
+        type: 'multiple-choice' as const,
+        question: 'What challenge does online learning present?',
+        options: [
+          'Lack of flexibility',
+          'Need for self-discipline',
+          'Too much structure',
+          'Limited access to materials'
+        ],
+        correct: 1
+      }
+    ]
   }
 ]
 
 export default function ReadingPage() {
   const [currentPassage, setCurrentPassage] = useState(0)
-  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number | number[] }>({})
+  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number | number[] | { [key: number]: number } }>({})
   const [showResults, setShowResults] = useState(false)
   const [score, setScore] = useState(0)
   const { updateProgress, addTime, completeActivity } = useProgress()
