@@ -683,8 +683,6 @@ export default function WritingPage() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-      </div>
     </div>
   )
 }
