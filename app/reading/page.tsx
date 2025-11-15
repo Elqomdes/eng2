@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { BookOpen, CheckCircle, XCircle, ArrowRight, ArrowLeft } from 'lucide-react'
+import { BookOpen, CheckCircle, XCircle, ArrowRight, ArrowLeft, RefreshCw, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProgress } from '@/components/ProgressProvider'
 
@@ -44,212 +44,90 @@ interface ReadingPassage {
   questions: Question[]
 }
 
-const readingPassages: ReadingPassage[] = [
-  {
-    id: 1,
-    title: 'The Benefits of Reading',
-    level: 'Beginner',
-    content: `Reading is one of the most important skills you can develop. It opens up new worlds and allows you to learn about different cultures, ideas, and perspectives. When you read regularly, you improve your vocabulary, enhance your writing skills, and become a better communicator.
-
-Reading also helps reduce stress. Studies show that just six minutes of reading can reduce stress levels by up to 68%. It's a great way to relax and escape from the pressures of daily life.
-
-Moreover, reading improves your memory and concentration. When you read, your brain is actively working to understand and remember information. This mental exercise keeps your brain sharp and helps prevent cognitive decline as you age.
-
-Finally, reading is a source of entertainment. Whether you enjoy fiction, non-fiction, or poetry, there's always something new to discover. Books can take you on adventures, teach you new skills, or help you understand complex topics.`,
-    questions: [
-      {
-        id: 1,
-        type: 'multiple-choice' as const,
-        question: 'What is one benefit of reading mentioned in the text?',
-        options: [
-          'It makes you taller',
-          'It improves your vocabulary',
-          'It helps you sleep better',
-          'It increases your appetite'
-        ],
-        correct: 1
-      },
-      {
-        id: 2,
-        type: 'multiple-choice' as const,
-        question: 'How much can reading reduce stress levels?',
-        options: [
-          'Up to 50%',
-          'Up to 68%',
-          'Up to 75%',
-          'Up to 90%'
-        ],
-        correct: 1
-      },
-      {
-        id: 3,
-        type: 'multiple-choice' as const,
-        question: 'What does reading help prevent?',
-        options: [
-          'Physical illness',
-          'Cognitive decline',
-          'Hair loss',
-          'Weight gain'
-        ],
-        correct: 1
-      }
-    ]
-  },
-  {
-    id: 2,
-    title: 'Climate Change and Its Effects',
-    level: 'Intermediate',
-    content: `Climate change is one of the most pressing issues of our time. It refers to long-term changes in temperature, precipitation patterns, and other aspects of the Earth's climate system. The primary cause of recent climate change is human activity, particularly the burning of fossil fuels which releases greenhouse gases into the atmosphere.
-
-These greenhouse gases trap heat from the sun, causing the Earth's average temperature to rise. This phenomenon, known as global warming, has far-reaching effects on our planet. Sea levels are rising due to melting ice caps and glaciers. Extreme weather events, such as hurricanes, droughts, and floods, are becoming more frequent and severe.
-
-Ecosystems around the world are being affected. Many species are struggling to adapt to changing conditions, and some face the risk of extinction. Coral reefs, which are home to a quarter of all marine species, are particularly vulnerable to rising ocean temperatures.
-
-Addressing climate change requires global cooperation. Countries must work together to reduce greenhouse gas emissions, invest in renewable energy sources, and develop sustainable practices. Individual actions, such as reducing energy consumption and supporting eco-friendly products, also play an important role.`,
-    questions: [
-      {
-        id: 4,
-        type: 'multiple-choice' as const,
-        question: 'What is the primary cause of recent climate change?',
-        options: [
-          'Natural disasters',
-          'Human activity',
-          'Solar radiation',
-          'Ocean currents'
-        ],
-        correct: 1
-      },
-      {
-        id: 5,
-        type: 'multiple-choice' as const,
-        question: 'What percentage of marine species live in coral reefs?',
-        options: [
-          '10%',
-          '25%',
-          '50%',
-          '75%'
-        ],
-        correct: 1
-      },
-      {
-        id: 6,
-        type: 'multiple-choice' as const,
-        question: 'What is required to address climate change?',
-        options: [
-          'Individual action only',
-          'Global cooperation',
-          'Government action only',
-          'Scientific research only'
-        ],
-        correct: 1
-      }
-    ]
-  },
-  {
-    id: 3,
-    title: 'The Art of Communication',
-    level: 'B1',
-    content: `Paragraph A: Effective communication is essential in both personal and professional settings. It involves not just speaking, but also listening actively to what others are saying. Good communicators pay attention to body language, tone of voice, and the context of the conversation.
-
-Paragraph B: In the workplace, clear communication can prevent misunderstandings and improve productivity. When team members communicate effectively, projects run more smoothly and deadlines are met more consistently. Regular meetings and open dialogue help maintain this communication flow.
-
-Paragraph C: Technology has transformed how we communicate. Email, instant messaging, and video calls have made it easier to stay connected with people around the world. However, face-to-face communication still remains the most effective method for building strong relationships.
-
-Paragraph D: Learning to communicate well takes practice. It requires patience, empathy, and the ability to see things from another person's perspective. By improving our communication skills, we can build better relationships and achieve greater success in all areas of life.`,
-    questions: [
-      {
-        id: 7,
-        type: 'matching' as const,
-        instruction: 'Match each statement with the correct paragraph (A, B, C, or D).',
-        items: [
-          'The importance of active listening',
-          'The impact of technology on communication',
-          'How communication improves work efficiency',
-          'The need for practice in communication'
-        ],
-        paragraphs: ['Paragraph A', 'Paragraph B', 'Paragraph C', 'Paragraph D'],
-        matches: { 0: 0, 1: 2, 2: 1, 3: 3 }
-      },
-      {
-        id: 8,
-        type: 'multiple-choice' as const,
-        question: 'According to Paragraph C, what is still the most effective communication method?',
-        options: [
-          'Email',
-          'Video calls',
-          'Face-to-face communication',
-          'Instant messaging'
-        ],
-        correct: 2
-      },
-      {
-        id: 9,
-        type: 'multiple-choice' as const,
-        question: 'What does Paragraph D suggest is needed to improve communication?',
-        options: [
-          'Technology',
-          'Practice and empathy',
-          'More meetings',
-          'Better technology'
-        ],
-        correct: 1
-      }
-    ]
-  },
-  {
-    id: 4,
-    title: 'The Future of Education',
-    level: 'B2',
-    content: `The education system is undergoing significant changes as we move further into the 21st century. Traditional classroom settings are being supplemented and sometimes replaced by online learning platforms, interactive technologies, and personalized learning approaches.`,
-    questions: [
-      {
-        id: 10,
-        type: 'ordering' as const,
-        instruction: 'Arrange the following sentences to form a coherent paragraph about online learning.',
-        parts: [
-          'This flexibility allows students to learn at their own pace and review materials as needed.',
-          'Online learning has become increasingly popular in recent years.',
-          'However, it also requires self-discipline and motivation from students.',
-          'It offers flexibility that traditional classroom settings cannot always provide.'
-        ],
-        correctOrder: [1, 3, 0, 2]
-      },
-      {
-        id: 11,
-        type: 'multiple-choice' as const,
-        question: 'What is one advantage of online learning mentioned in the text?',
-        options: [
-          'It requires less self-discipline',
-          'It allows learning at your own pace',
-          'It is always easier than traditional learning',
-          'It doesn\'t require motivation'
-        ],
-        correct: 1
-      },
-      {
-        id: 12,
-        type: 'multiple-choice' as const,
-        question: 'What challenge does online learning present?',
-        options: [
-          'Lack of flexibility',
-          'Need for self-discipline',
-          'Too much structure',
-          'Limited access to materials'
-        ],
-        correct: 1
-      }
-    ]
-  }
-]
+// Reading passages are now generated dynamically via API
 
 export default function ReadingPage() {
-  const [currentPassage, setCurrentPassage] = useState(0)
+  const [passage, setPassage] = useState<ReadingPassage | null>(null)
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number | number[] | { [key: number]: number } }>({})
   const [showResults, setShowResults] = useState(false)
   const [score, setScore] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [level, setLevel] = useState<string>('B2-C1')
   const { updateProgress, addTime, completeActivity } = useProgress()
 
-  const passage = readingPassages[currentPassage]
+  // Generate new passage on component mount
+  useEffect(() => {
+    generateNewPassage()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const generateNewPassage = async (selectedLevel?: string) => {
+    setIsGenerating(true)
+    setError(null)
+    setIsLoading(true)
+    setShowResults(false)
+    setSelectedAnswers({})
+    setScore(0)
+
+    try {
+      const response = await fetch('/api/reading/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          level: selectedLevel || level,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate reading passage')
+      }
+
+      const data = await response.json()
+      setPassage(data)
+      setLevel(data.level || level)
+    } catch (err: any) {
+      console.error('Error generating passage:', err)
+      setError(err.message || 'Yeni makale oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.')
+    } finally {
+      setIsLoading(false)
+      setIsGenerating(false)
+    }
+  }
+
+  if (isLoading && !passage) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
+          <p className="text-gray-600 text-lg">Akademik makale oluşturuluyor...</p>
+          <p className="text-gray-500 text-sm mt-2">Google Akademik tarzı içerik hazırlanıyor</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error && !passage) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 text-center">
+          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-red-900 mb-2">Hata Oluştu</h3>
+          <p className="text-red-700 mb-4">{error}</p>
+          <button
+            onClick={() => generateNewPassage()}
+            className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
+          >
+            Tekrar Dene
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (!passage) {
     return <div className="container mx-auto px-4 py-8">Yükleniyor...</div>
@@ -273,15 +151,89 @@ export default function ReadingPage() {
     })
   }
 
-  const handleOrderingChange = (questionId: number, fromIndex: number, toIndex: number) => {
+  const handleOrderingChange = (questionId: number, draggedPartIndex: number, targetPartIndex: number) => {
+    if (!passage) return
     const currentOrder = (selectedAnswers[questionId] as number[]) || []
+    const question = passage.questions.find(q => q.id === questionId)
+    
+    if (!question || question.type !== 'ordering') return
+    
+    // If order is empty, initialize it with all parts in original order
+    if (currentOrder.length === 0) {
+      const initialOrder = question.parts.map((_, idx) => idx)
+      setSelectedAnswers({
+        ...selectedAnswers,
+        [questionId]: initialOrder
+      })
+      return
+    }
+    
+    // Find positions in the current order array
+    const fromPos = currentOrder.indexOf(draggedPartIndex)
+    const toPos = currentOrder.indexOf(targetPartIndex)
+    
+    // If either part is not in the order yet, add it
+    if (fromPos === -1 && toPos === -1) {
+      // Both are new, add both
+      const newOrder = [...currentOrder, draggedPartIndex, targetPartIndex]
+      setSelectedAnswers({
+        ...selectedAnswers,
+        [questionId]: newOrder
+      })
+      return
+    }
+    
+    if (fromPos === -1) {
+      // Dragged part is new, insert it at target position
+      const newOrder = [...currentOrder]
+      newOrder.splice(toPos, 0, draggedPartIndex)
+      setSelectedAnswers({
+        ...selectedAnswers,
+        [questionId]: newOrder
+      })
+      return
+    }
+    
+    if (toPos === -1) {
+      // Target is new, move dragged to end
+      const newOrder = currentOrder.filter(idx => idx !== draggedPartIndex)
+      newOrder.push(draggedPartIndex)
+      setSelectedAnswers({
+        ...selectedAnswers,
+        [questionId]: newOrder
+      })
+      return
+    }
+    
+    // Both are in order, swap their positions
     const newOrder = [...currentOrder]
-    const [removed] = newOrder.splice(fromIndex, 1)
-    newOrder.splice(toIndex, 0, removed)
+    const [removed] = newOrder.splice(fromPos, 1)
+    newOrder.splice(toPos, 0, removed)
     setSelectedAnswers({
       ...selectedAnswers,
       [questionId]: newOrder
     })
+  }
+  
+  const handleOrderingClick = (questionId: number, partIndex: number) => {
+    if (showResults) return
+    
+    const currentOrder = (selectedAnswers[questionId] as number[]) || []
+    
+    // If part is already in order, remove it; otherwise add it to the end
+    if (currentOrder.includes(partIndex)) {
+      const newOrder = currentOrder.filter(idx => idx !== partIndex)
+      setSelectedAnswers({
+        ...selectedAnswers,
+        [questionId]: newOrder
+      })
+    } else {
+      const newOrder = [...currentOrder, partIndex]
+      setSelectedAnswers({
+        ...selectedAnswers,
+        [questionId]: newOrder
+      })
+    }
   }
 
   const handleSubmit = () => {
@@ -304,9 +256,14 @@ export default function ReadingPage() {
         }
       } else if (q.type === 'ordering') {
         const order = selectedAnswers[q.id] as number[] || []
-        if (order.length === q.correctOrder.length && 
-            order.every((val, idx) => val === q.correctOrder[idx])) {
+        // Check if order matches correctOrder exactly
+        if (order.length === q.correctOrder.length) {
+          const isCorrect = order.every((partIndex, pos) => {
+            return partIndex === q.correctOrder[pos]
+          })
+          if (isCorrect) {
           correct++
+          }
         }
       }
     })
@@ -319,23 +276,6 @@ export default function ReadingPage() {
     completeActivity()
   }
 
-  const handleNext = () => {
-    if (currentPassage < readingPassages.length - 1) {
-      setCurrentPassage(currentPassage + 1)
-      setSelectedAnswers({})
-      setShowResults(false)
-      setScore(0)
-    }
-  }
-
-  const handlePrevious = () => {
-    if (currentPassage > 0) {
-      setCurrentPassage(currentPassage - 1)
-      setSelectedAnswers({})
-      setShowResults(false)
-      setScore(0)
-    }
-  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -353,14 +293,43 @@ export default function ReadingPage() {
 
       <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
         <div className="flex justify-between items-center mb-4">
-          <div>
+          <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900">{passage.title}</h2>
-            <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-              {passage.level}
-            </span>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                {passage.level}
+              </span>
+              <span className="text-xs text-gray-500">AI ile oluşturuldu</span>
+            </div>
           </div>
-          <div className="text-sm text-gray-500">
-            {currentPassage + 1} / {readingPassages.length}
+          <div className="flex items-center gap-2">
+            <select
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              disabled={isGenerating}
+              className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              <option value="B2">B2</option>
+              <option value="B2-C1">B2-C1</option>
+              <option value="C1">C1</option>
+            </select>
+            <button
+              onClick={() => generateNewPassage(level)}
+              disabled={isGenerating}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Oluşturuluyor...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Yeni Makale</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -460,50 +429,153 @@ export default function ReadingPage() {
                 return (
                   <div key={question.id} className="border rounded-lg p-4">
                     <p className="font-medium text-gray-900 mb-3">{question.instruction}</p>
-                    <div className="space-y-2">
-                      {question.parts.map((part, index) => {
-                        const currentPosition = order.indexOf(index)
-                        const isCorrect = showResults && currentPosition === question.correctOrder.indexOf(index)
-                        const isWrong = showResults && currentPosition !== -1 && currentPosition !== question.correctOrder.indexOf(index)
+                    
+                    {/* Display ordered parts */}
+                    <div className="space-y-2 mb-4">
+                      {order.length > 0 ? (
+                        order.map((partIndex, orderPos) => {
+                          const part = question.parts[partIndex]
+                          const correctPos = question.correctOrder.indexOf(partIndex)
+                          const isCorrect = showResults && orderPos === correctPos
+                          const isWrong = showResults && orderPos !== correctPos && correctPos !== -1
                         return (
                           <div
-                            key={index}
+                              key={`ordered-${partIndex}`}
                             draggable={!showResults}
                             onDragStart={(e) => {
-                              e.dataTransfer.setData('text/plain', index.toString())
+                                e.dataTransfer.setData('text/plain', partIndex.toString())
+                                e.dataTransfer.setData('orderPos', orderPos.toString())
                             }}
                             onDragOver={(e) => {
                               e.preventDefault()
+                                e.currentTarget.classList.add('border-blue-400')
+                              }}
+                              onDragLeave={(e) => {
+                                e.currentTarget.classList.remove('border-blue-400')
                             }}
                             onDrop={(e) => {
                               e.preventDefault()
-                              const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'))
-                              const dropIndex = order.indexOf(index) !== -1 ? order.indexOf(index) : order.length
-                              handleOrderingChange(question.id, order.indexOf(draggedIndex), dropIndex)
-                            }}
-                            className={`p-3 rounded-lg border-2 transition-all ${
+                                e.currentTarget.classList.remove('border-blue-400')
+                                const draggedPartIndex = parseInt(e.dataTransfer.getData('text/plain'))
+                                const targetPartIndex = partIndex
+                                // If dragging within ordered list, reorder
+                                if (order.includes(draggedPartIndex) && order.includes(targetPartIndex)) {
+                                  const newOrder = [...order]
+                                  const fromPos = newOrder.indexOf(draggedPartIndex)
+                                  const toPos = newOrder.indexOf(targetPartIndex)
+                                  const [removed] = newOrder.splice(fromPos, 1)
+                                  newOrder.splice(toPos, 0, removed)
+                                  setSelectedAnswers({
+                                    ...selectedAnswers,
+                                    [question.id]: newOrder
+                                  })
+                                } else {
+                                  handleOrderingChange(question.id, draggedPartIndex, targetPartIndex)
+                                }
+                              }}
+                              className={`p-3 rounded-lg border-2 transition-all flex items-center space-x-3 ${
                               isCorrect ? 'border-green-500 bg-green-50' : ''
                             } ${
                               isWrong ? 'border-red-500 bg-red-50' : ''
                             } ${
-                              !showResults ? 'border-gray-200 hover:border-blue-300 cursor-move' : 'border-gray-200'
+                                !showResults ? 'border-gray-200 hover:border-blue-300 cursor-move bg-white' : 'border-gray-200 bg-gray-50'
                             }`}
                           >
-                            <div className="flex items-center space-x-2">
+                              <div className="flex items-center space-x-2 flex-1">
+                                <span className="text-sm font-semibold text-gray-500 w-8">{orderPos + 1}.</span>
                               {showResults && isCorrect && (
                                 <CheckCircle className="w-5 h-5 text-green-600" />
                               )}
                               {showResults && isWrong && (
                                 <XCircle className="w-5 h-5 text-red-600" />
                               )}
-                              <span className="text-gray-700">{part}</span>
+                                <span className={showResults && isCorrect ? 'font-semibold text-green-700' : showResults && isWrong ? 'text-red-700' : 'text-gray-700'}>
+                                  {part}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })
+                      ) : (
+                        <p className="text-sm text-gray-500 italic p-3 bg-gray-50 rounded-lg">
+                          Parçaları sıralamak için aşağıdaki listeden seçin veya sürükleyip bırakın.
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Display unordered parts */}
+                    {!showResults && (
+                      <div className="border-t pt-4">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Kullanılabilir Parçalar:</p>
+                        <div className="space-y-2">
+                          {question.parts.map((part, index) => {
+                            const isInOrder = order.includes(index)
+                            return (
+                              <div
+                                key={`unordered-${index}`}
+                                onClick={() => handleOrderingClick(question.id, index)}
+                                draggable={!showResults}
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData('text/plain', index.toString())
+                                }}
+                                onDragOver={(e) => {
+                                  e.preventDefault()
+                                  if (order.length > 0) {
+                                    e.currentTarget.classList.add('border-blue-400')
+                                  }
+                                }}
+                                onDragLeave={(e) => {
+                                  e.currentTarget.classList.remove('border-blue-400')
+                                }}
+                                onDrop={(e) => {
+                                  e.preventDefault()
+                                  e.currentTarget.classList.remove('border-blue-400')
+                                  const draggedPartIndex = parseInt(e.dataTransfer.getData('text/plain'))
+                                  const currentOrder = (selectedAnswers[question.id] as number[]) || []
+                                  // If dragging from ordered list to unordered, remove from order
+                                  if (currentOrder.includes(draggedPartIndex)) {
+                                    const newOrder = currentOrder.filter(idx => idx !== draggedPartIndex)
+                                    setSelectedAnswers({
+                                      ...selectedAnswers,
+                                      [question.id]: newOrder
+                                    })
+                                  } else {
+                                    // Add to order
+                                    handleOrderingClick(question.id, draggedPartIndex)
+                                  }
+                                }}
+                                className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                                  isInOrder 
+                                    ? 'border-gray-300 bg-gray-100 opacity-50' 
+                                    : 'border-gray-200 hover:border-blue-300 bg-white'
+                                }`}
+                              >
+                                <div className="flex items-center space-x-2">
+                                  {isInOrder && (
+                                    <CheckCircle className="w-5 h-5 text-green-600" />
+                                  )}
+                                  <span className={isInOrder ? 'text-gray-500 line-through' : 'text-gray-700'}>
+                                    {part}
+                                  </span>
                             </div>
                           </div>
                         )
                       })}
                     </div>
-                    {!showResults && order.length > 0 && (
-                      <p className="text-sm text-gray-500 mt-2">Sıralama: {order.map(i => i + 1).join(' → ')}</p>
+                      </div>
+                    )}
+                    
+                    {showResults && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <p className="text-sm font-medium text-blue-900 mb-1">Doğru Sıralama:</p>
+                        <div className="space-y-1">
+                          {question.correctOrder.map((partIndex, pos) => (
+                            <div key={`correct-${partIndex}`} className="text-sm text-blue-700">
+                              {pos + 1}. {question.parts[partIndex]}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
                 )
@@ -546,35 +618,22 @@ export default function ReadingPage() {
             </div>
             <div className="flex space-x-4">
               <button
-                onClick={handlePrevious}
-                disabled={currentPassage === 0}
-                className="flex-1 flex items-center justify-center space-x-2 bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => generateNewPassage(level)}
+                disabled={isGenerating}
+                className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Önceki</span>
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Yeni Makale Oluşturuluyor...</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-5 h-5" />
+                    <span>Yeni Makale Al</span>
+                  </>
+                )}
               </button>
-              {currentPassage < readingPassages.length - 1 ? (
-                <button
-                  onClick={handleNext}
-                  className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all"
-                >
-                  <span>Sonraki</span>
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    setCurrentPassage(0)
-                    setSelectedAnswers({})
-                    setShowResults(false)
-                    setScore(0)
-                  }}
-                  className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all"
-                >
-                  <span>Başa Dön</span>
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              )}
             </div>
           </div>
         )}
