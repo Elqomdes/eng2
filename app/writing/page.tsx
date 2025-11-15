@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { PenTool, Save, CheckCircle, Lightbulb, Clock, Sparkles, Loader2, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProgress } from '@/components/ProgressProvider'
@@ -63,13 +63,22 @@ export default function WritingPage() {
   const [writing, setWriting] = useState('')
   const [wordCount, setWordCount] = useState(0)
   const [saved, setSaved] = useState(false)
-  const [startTime] = useState(Date.now())
+  const startTimeRef = useRef(Date.now())
   const [evaluating, setEvaluating] = useState(false)
   const [evaluation, setEvaluation] = useState<WritingEvaluation | null>(null)
   const [showEvaluation, setShowEvaluation] = useState(false)
   const { updateProgress, addTime, completeActivity } = useProgress()
 
   const prompt = writingPrompts[currentPrompt]
+
+  // Reset start time when prompt changes
+  useEffect(() => {
+    startTimeRef.current = Date.now()
+  }, [currentPrompt])
+
+  if (!prompt) {
+    return <div className="container mx-auto px-4 py-8">Yükleniyor...</div>
+  }
 
   const handleWritingChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value
@@ -81,7 +90,7 @@ export default function WritingPage() {
 
   const handleSave = () => {
     if (wordCount >= prompt.wordCount) {
-      const timeSpent = Math.round((Date.now() - startTime) / 60000)
+      const timeSpent = Math.round((Date.now() - startTimeRef.current) / 60000)
       updateProgress('writing', Math.min(100, (wordCount / prompt.wordCount) * 50 + 25))
       addTime(timeSpent)
       completeActivity()
@@ -106,7 +115,7 @@ export default function WritingPage() {
       
       // İlerlemeyi güncelle
       updateProgress('writing', Math.min(100, result.score))
-      addTime(Math.round((Date.now() - startTime) / 60000))
+      addTime(Math.round((Date.now() - startTimeRef.current) / 60000))
       completeActivity()
     } catch (error) {
       console.error('Evaluation error:', error)
@@ -123,6 +132,7 @@ export default function WritingPage() {
       setWriting('')
       setWordCount(0)
       setSaved(false)
+      startTimeRef.current = Date.now()
     }
   }
 
@@ -132,6 +142,7 @@ export default function WritingPage() {
       setWriting('')
       setWordCount(0)
       setSaved(false)
+      startTimeRef.current = Date.now()
     }
   }
 

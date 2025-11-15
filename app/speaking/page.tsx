@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Mic, MicOff, Play, RotateCcw, Volume2, CheckCircle, Sparkles, Loader2, X, FileText } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProgress } from '@/components/ProgressProvider'
@@ -73,12 +73,21 @@ export default function SpeakingPage() {
   const [evaluating, setEvaluating] = useState(false)
   const [evaluation, setEvaluation] = useState<SpeakingEvaluation | null>(null)
   const [showEvaluation, setShowEvaluation] = useState(false)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const { updateProgress, addTime, completeActivity } = useProgress()
 
   const exercise = speakingExercises[currentExercise]
 
+  const stopRecording = useCallback(() => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop()
+      setIsRecording(false)
+    }
+  }, [mediaRecorder, isRecording])
+
   useEffect(() => {
+    if (!exercise) return
+    
     if (isRecording) {
       intervalRef.current = setInterval(() => {
         setTimeElapsed(prev => {
@@ -92,15 +101,21 @@ export default function SpeakingPage() {
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
-  }, [isRecording, exercise.duration])
+  }, [isRecording, exercise, stopRecording])
+
+  if (!exercise) {
+    return <div className="container mx-auto px-4 py-8">Yükleniyor...</div>
+  }
 
   const startRecording = async () => {
     try {
@@ -135,24 +150,28 @@ export default function SpeakingPage() {
     }
   }
 
-  const stopRecording = () => {
-    if (mediaRecorder && isRecording) {
-      mediaRecorder.stop()
-      setIsRecording(false)
-    }
-  }
-
   const handleReset = () => {
     setIsRecording(false)
     setTimeElapsed(0)
     setRecordingComplete(false)
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl)
+    }
     setAudioUrl(null)
     setAudioChunks([])
     setTranscript('')
     setShowEvaluation(false)
     setEvaluation(null)
-    if (mediaRecorder) {
-      mediaRecorder.stop()
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      try {
+        mediaRecorder.stop()
+      } catch (error) {
+        console.error('Error stopping mediaRecorder:', error)
+      }
     }
   }
 
@@ -191,6 +210,15 @@ export default function SpeakingPage() {
       setEvaluating(false)
     }
   }
+
+  // Cleanup audio URL on unmount or exercise change
+  useEffect(() => {
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl)
+      }
+    }
+  }, [audioUrl])
 
   const handleNext = () => {
     if (currentExercise < speakingExercises.length - 1) {
@@ -515,4 +543,5 @@ export default function SpeakingPage() {
     </div>
   )
 }
+
 

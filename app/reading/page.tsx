@@ -79,7 +79,7 @@ Ecosystems around the world are being affected. Many species are struggling to a
 Addressing climate change requires global cooperation. Countries must work together to reduce greenhouse gas emissions, invest in renewable energy sources, and develop sustainable practices. Individual actions, such as reducing energy consumption and supporting eco-friendly products, also play an important role.`,
     questions: [
       {
-        id: 1,
+        id: 4,
         question: 'What is the primary cause of recent climate change?',
         options: [
           'Natural disasters',
@@ -90,7 +90,7 @@ Addressing climate change requires global cooperation. Countries must work toget
         correct: 1
       },
       {
-        id: 2,
+        id: 5,
         question: 'What percentage of marine species live in coral reefs?',
         options: [
           '10%',
@@ -101,7 +101,7 @@ Addressing climate change requires global cooperation. Countries must work toget
         correct: 1
       },
       {
-        id: 3,
+        id: 6,
         question: 'What is required to address climate change?',
         options: [
           'Individual action only',
@@ -123,6 +123,10 @@ export default function ReadingPage() {
   const { updateProgress, addTime, completeActivity } = useProgress()
 
   const passage = readingPassages[currentPassage]
+
+  if (!passage) {
+    return <div className="container mx-auto px-4 py-8">Yükleniyor...</div>
+  }
 
   const handleAnswerSelect = (questionId: number, optionIndex: number) => {
     setSelectedAnswers({

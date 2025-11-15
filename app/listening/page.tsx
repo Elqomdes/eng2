@@ -80,7 +80,7 @@ Interviewer: Excellent. Do you have any questions for us?
 Candidate: Yes, I'd like to know more about the team structure and what opportunities there are for professional development.`,
     questions: [
       {
-        id: 1,
+        id: 4,
         question: 'What is the candidate\'s educational background?',
         options: [
           'Business degree',
@@ -91,7 +91,7 @@ Candidate: Yes, I'd like to know more about the team structure and what opportun
         correct: 1
       },
       {
-        id: 2,
+        id: 5,
         question: 'What does the candidate find most interesting about the position?',
         options: [
           'The salary',
@@ -102,7 +102,7 @@ Candidate: Yes, I'd like to know more about the team structure and what opportun
         correct: 1
       },
       {
-        id: 3,
+        id: 6,
         question: 'What does the candidate ask about?',
         options: [
           'Salary and benefits',
@@ -125,12 +125,14 @@ export default function ListeningPage() {
   const [showResults, setShowResults] = useState(false)
   const [score, setScore] = useState(0)
   const [showTranscript, setShowTranscript] = useState(false)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const { updateProgress, addTime, completeActivity } = useProgress()
 
   const exercise = listeningExercises[currentExercise]
 
   useEffect(() => {
+    if (!exercise) return
+    
     if (isPlaying) {
       intervalRef.current = setInterval(() => {
         setTimeElapsed(prev => {
@@ -144,15 +146,21 @@ export default function ListeningPage() {
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
-  }, [isPlaying, exercise.duration])
+  }, [isPlaying, exercise])
+
+  if (!exercise) {
+    return <div className="container mx-auto px-4 py-8">Yükleniyor...</div>
+  }
 
   const handlePlay = () => {
     setIsPlaying(true)
@@ -166,6 +174,10 @@ export default function ListeningPage() {
     setIsPlaying(false)
     setTimeElapsed(0)
     setShowTranscript(false)
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
   }
 
   const handleAnswerSelect = (questionId: number, optionIndex: number) => {
@@ -402,4 +414,5 @@ export default function ListeningPage() {
     </div>
   )
 }
+
 
