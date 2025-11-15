@@ -43,7 +43,18 @@ export default function SpeakingPage() {
   const [level, setLevel] = useState<string>('B2')
   const [taskType, setTaskType] = useState<string>('random')
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const levelRef = useRef<string>('B2')
+  const taskTypeRef = useRef<string>('random')
   const { updateProgress, addTime, completeActivity } = useProgress()
+
+  // Update refs when state changes
+  useEffect(() => {
+    levelRef.current = level
+  }, [level])
+
+  useEffect(() => {
+    taskTypeRef.current = taskType
+  }, [taskType])
 
   const generateNewExercise = useCallback(async (selectedLevel?: string, selectedTaskType?: string) => {
     setIsGenerating(true)
@@ -83,8 +94,8 @@ export default function SpeakingPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          level: selectedLevel || level,
-          taskType: selectedTaskType || taskType === 'random' ? undefined : selectedTaskType || taskType,
+          level: selectedLevel || levelRef.current,
+          taskType: selectedTaskType || taskTypeRef.current === 'random' ? undefined : selectedTaskType || taskTypeRef.current,
         }),
       })
 
@@ -102,8 +113,14 @@ export default function SpeakingPage() {
 
       const data = await response.json()
       setCurrentExercise(data)
-      setLevel(data.level || level)
-      setTaskType(data.taskType || taskType)
+      if (data.level) {
+        setLevel(data.level)
+        levelRef.current = data.level
+      }
+      if (data.taskType) {
+        setTaskType(data.taskType)
+        taskTypeRef.current = data.taskType
+      }
     } catch (err: any) {
       console.error('Error generating exercise:', err)
       setError(err.message || 'Yeni konuşma görevi oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.')
@@ -111,13 +128,21 @@ export default function SpeakingPage() {
       setIsLoading(false)
       setIsGenerating(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Generate new exercise on component mount
+  // Generate new exercise on component mount only
   useEffect(() => {
-    generateNewExercise()
-  }, [generateNewExercise])
+    let isMounted = true
+    generateNewExercise().catch((err) => {
+      if (isMounted) {
+        console.error('Error in generateNewExercise:', err)
+      }
+    })
+    return () => {
+      isMounted = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const generateTranscript = async (audioBlob: Blob) => {
     setIsGeneratingTranscript(true)
@@ -288,7 +313,7 @@ export default function SpeakingPage() {
   }
 
   const handleSubmit = () => {
-    if (recordingComplete) {
+    if (recordingComplete && currentExercise) {
       const timeSpent = Math.round(timeElapsed / 60)
       updateProgress('speaking', Math.min(100, (timeElapsed / currentExercise.duration) * 50 + 25))
       addTime(timeSpent)
@@ -299,6 +324,11 @@ export default function SpeakingPage() {
   const handleEvaluate = async () => {
     if (!transcript.trim()) {
       alert('Lütfen konuşmanızın transkriptini bekleyin veya manuel olarak girin.')
+      return
+    }
+
+    if (!currentExercise) {
+      alert('Görev yüklenmedi. Lütfen sayfayı yenileyin.')
       return
     }
 
