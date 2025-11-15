@@ -89,8 +89,15 @@ export default function SpeakingPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to generate speaking exercise')
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.error || 'Failed to generate speaking exercise'
+        
+        // Check for 429 status code
+        if (response.status === 429 || errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('kotası')) {
+          throw new Error('OpenAI API kotası aşıldı. Lütfen OpenAI hesabınızın faturalama ayarlarını kontrol edin ve tekrar deneyin.')
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
@@ -124,14 +131,26 @@ export default function SpeakingPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to generate transcript')
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.error || 'Failed to generate transcript'
+        
+        // Check for 429 status code
+        if (response.status === 429 || errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('kotası')) {
+          alert('OpenAI API kotası aşıldı. Transkripti manuel olarak girebilirsiniz.')
+          return
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
       setTranscript(data.transcript || '')
     } catch (err: any) {
       console.error('Error generating transcript:', err)
-      alert('Transkript oluşturulurken bir hata oluştu. Lütfen manuel olarak girebilirsiniz.')
+      const errorMessage = err.message || 'Transkript oluşturulurken bir hata oluştu.'
+      if (!errorMessage.includes('kotası')) {
+        alert(`${errorMessage} Lütfen manuel olarak girebilirsiniz.`)
+      }
     } finally {
       setIsGeneratingTranscript(false)
     }
@@ -298,7 +317,13 @@ export default function SpeakingPage() {
     } catch (error) {
       console.error('Evaluation error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Değerlendirme sırasında bir hata oluştu.'
-      alert(`Hata: ${errorMessage}\n\nLütfen tekrar deneyin veya API anahtarınızı kontrol edin.`)
+      
+      // Show specific message for quota errors
+      if (errorMessage.includes('kotası') || errorMessage.toLowerCase().includes('quota')) {
+        alert(`Hata: ${errorMessage}\n\nOpenAI hesabınızın faturalama ayarlarını kontrol edin.`)
+      } else {
+        alert(`Hata: ${errorMessage}\n\nLütfen tekrar deneyin veya API anahtarınızı kontrol edin.`)
+      }
     } finally {
       setEvaluating(false)
     }

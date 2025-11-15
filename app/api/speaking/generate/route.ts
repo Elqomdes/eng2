@@ -290,15 +290,52 @@ Important:
   } catch (error: any) {
     console.error('Error generating speaking task:', error)
     
-    if (error instanceof Error) {
+    // Handle OpenAI API errors - check multiple possible error structures
+    const statusCode = error?.status || error?.statusCode || error?.response?.status || error?.response?.statusCode
+    
+    if (statusCode === 429) {
       return NextResponse.json(
-        { error: error.message || 'Failed to generate speaking task' },
+        { error: 'OpenAI API kotası aşıldı. Lütfen OpenAI hesabınızın faturalama ayarlarını kontrol edin ve tekrar deneyin.' },
+        { status: 429 }
+      )
+    }
+    
+    if (statusCode === 401) {
+      return NextResponse.json(
+        { error: 'OpenAI API anahtarı geçersiz. Lütfen API anahtarınızı kontrol edin.' },
+        { status: 401 }
+      )
+    }
+    
+    if (statusCode === 500 || statusCode === 503) {
+      return NextResponse.json(
+        { error: 'OpenAI servisi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.' },
+        { status: 503 }
+      )
+    }
+    
+    if (error instanceof Error) {
+      const errorMessage = error.message || ''
+      
+      // Check for quota exceeded in error message (case insensitive)
+      if (errorMessage.toLowerCase().includes('quota') || 
+          errorMessage.toLowerCase().includes('billing') ||
+          errorMessage.toLowerCase().includes('exceeded') ||
+          errorMessage.includes('429')) {
+        return NextResponse.json(
+          { error: 'OpenAI API kotası aşıldı. Lütfen OpenAI hesabınızın faturalama ayarlarını kontrol edin ve tekrar deneyin.' },
+          { status: 429 }
+        )
+      }
+      
+      return NextResponse.json(
+        { error: errorMessage || 'Konuşma görevi oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.' },
         { status: 500 }
       )
     }
 
     return NextResponse.json(
-      { error: 'An unexpected error occurred' },
+      { error: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.' },
       { status: 500 }
     )
   }

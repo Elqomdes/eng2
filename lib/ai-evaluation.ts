@@ -1,3 +1,5 @@
+'use client'
+
 export interface WritingEvaluation {
   score: number
   content: {
@@ -157,7 +159,14 @@ export async function evaluateSpeaking(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || `Evaluation failed with status ${response.status}`)
+      const errorMessage = errorData.error || `Evaluation failed with status ${response.status}`
+      
+      // Check for 429 status code
+      if (response.status === 429 || errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('kotası')) {
+        throw new Error('OpenAI API kotası aşıldı. Lütfen OpenAI hesabınızın faturalama ayarlarını kontrol edin ve tekrar deneyin.')
+      }
+      
+      throw new Error(errorMessage)
     }
 
     const data = await response.json()
