@@ -175,6 +175,6 @@ export function useProgress() {
   return context
 }
 
-// Export both named and default for compatibility
+// Export ProgressProvider as both named and default
 export { ProgressProvider }
 export default ProgressProvider
