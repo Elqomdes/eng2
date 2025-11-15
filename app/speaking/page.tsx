@@ -228,7 +228,7 @@ export default function SpeakingPage() {
     if (isRecording) {
       intervalRef.current = setInterval(() => {
         setTimeElapsed(prev => {
-          if (prev >= currentExercise.duration) {
+          if (currentExercise.duration && prev >= currentExercise.duration) {
             stopRecording()
             return currentExercise.duration
           }
@@ -313,7 +313,7 @@ export default function SpeakingPage() {
   }
 
   const handleSubmit = () => {
-    if (recordingComplete && currentExercise) {
+    if (recordingComplete && currentExercise && currentExercise.duration) {
       const timeSpent = Math.round(timeElapsed / 60)
       updateProgress('speaking', Math.min(100, (timeElapsed / currentExercise.duration) * 50 + 25))
       addTime(timeSpent)
@@ -332,11 +332,21 @@ export default function SpeakingPage() {
       return
     }
 
+    if (!currentExercise.prompt || !currentExercise.level) {
+      alert('Görev verisi eksik. Lütfen yeni bir görev oluşturun.')
+      return
+    }
+
     setEvaluating(true)
     setShowEvaluation(false)
     
     try {
       const result = await evaluateSpeaking(transcript, currentExercise.prompt, currentExercise.level)
+      
+      if (!result || typeof result.score !== 'number') {
+        throw new Error('Geçersiz değerlendirme sonucu alındı.')
+      }
+      
       setEvaluation(result)
       setShowEvaluation(true)
       
@@ -368,7 +378,7 @@ export default function SpeakingPage() {
     }
   }, [audioUrl])
 
-  const progress = currentExercise ? (timeElapsed / currentExercise.duration) * 100 : 0
+  const progress = currentExercise && currentExercise.duration ? (timeElapsed / currentExercise.duration) * 100 : 0
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -431,24 +441,28 @@ export default function SpeakingPage() {
       <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{currentExercise.title}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{currentExercise.title || 'Konuşma Görevi'}</h2>
             <div className="flex items-center gap-2 mt-2">
-              <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
-                {currentExercise.level}
-              </span>
-              <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                {currentExercise.taskType === 'independent' ? (
-                  <span className="flex items-center gap-1">
-                    <MessageSquare className="w-4 h-4" />
-                    Independent Speaking
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1">
-                    <Video className="w-4 h-4" />
-                    Integrated Speaking
-                  </span>
-                )}
-              </span>
+              {currentExercise.level && (
+                <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
+                  {currentExercise.level}
+                </span>
+              )}
+              {currentExercise.taskType && (
+                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                  {currentExercise.taskType === 'independent' ? (
+                    <span className="flex items-center gap-1">
+                      <MessageSquare className="w-4 h-4" />
+                      Independent Speaking
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <Video className="w-4 h-4" />
+                      Integrated Speaking
+                    </span>
+                  )}
+                </span>
+              )}
               <span className="text-xs text-gray-500">AI ile oluşturuldu</span>
             </div>
           </div>
@@ -459,47 +473,57 @@ export default function SpeakingPage() {
           <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 mb-6 border-2 border-blue-200">
             <div className="flex items-center gap-2 mb-3">
               <Video className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">{currentExercise.video.title}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{currentExercise.video.title || 'Video İçeriği'}</h3>
             </div>
-            <div className="bg-white rounded-lg p-4 mb-4">
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">{currentExercise.video.transcript}</p>
-            </div>
-            <div className="border-t pt-4">
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Ana Noktalar:</h4>
-              <ul className="space-y-1">
-                {currentExercise.video.mainPoints.map((point, index) => (
-                  <li key={index} className="text-sm text-gray-700 flex items-start">
-                    <span className="text-blue-600 mr-2">•</span>
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {currentExercise.video.transcript && (
+              <div className="bg-white rounded-lg p-4 mb-4">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{currentExercise.video.transcript}</p>
+              </div>
+            )}
+            {currentExercise.video.mainPoints && Array.isArray(currentExercise.video.mainPoints) && currentExercise.video.mainPoints.length > 0 && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">Ana Noktalar:</h4>
+                <ul className="space-y-1">
+                  {currentExercise.video.mainPoints.map((point, index) => (
+                    <li key={index} className="text-sm text-gray-700 flex items-start">
+                      <span className="text-blue-600 mr-2">•</span>
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
         {/* Exercise Prompt */}
         <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Görev</h3>
-          <p className="text-gray-700 leading-relaxed mb-4 whitespace-pre-line">{currentExercise.prompt}</p>
-          <div className="border-t pt-4">
-            <p className="text-sm font-medium text-gray-600 mb-2">Örnek Başlangıç:</p>
-            <p className="text-sm text-gray-700 italic">{currentExercise.example}</p>
-          </div>
+          {currentExercise.prompt && (
+            <p className="text-gray-700 leading-relaxed mb-4 whitespace-pre-line">{currentExercise.prompt}</p>
+          )}
+          {currentExercise.example && (
+            <div className="border-t pt-4">
+              <p className="text-sm font-medium text-gray-600 mb-2">Örnek Başlangıç:</p>
+              <p className="text-sm text-gray-700 italic">{currentExercise.example}</p>
+            </div>
+          )}
         </div>
 
         {/* Tips */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">İpuçları</h3>
-          <ul className="space-y-2">
-            {currentExercise.tips.map((tip, index) => (
-              <li key={index} className="flex items-start text-gray-700">
-                <span className="text-orange-500 mr-2">•</span>
-                <span>{tip}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {currentExercise.tips && Array.isArray(currentExercise.tips) && currentExercise.tips.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">İpuçları</h3>
+            <ul className="space-y-2">
+              {currentExercise.tips.map((tip, index) => (
+                <li key={index} className="flex items-start text-gray-700">
+                  <span className="text-orange-500 mr-2">•</span>
+                  <span>{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Recording Section */}
         <div className="bg-gray-50 rounded-xl p-6 mb-6">
@@ -527,7 +551,7 @@ export default function SpeakingPage() {
             </button>
           </div>
 
-          {isRecording && (
+          {isRecording && currentExercise.duration && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -539,7 +563,7 @@ export default function SpeakingPage() {
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
+                  animate={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
                   className="h-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500"
                 />
               </div>
@@ -662,7 +686,7 @@ export default function SpeakingPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">AI Değerlendirme Sonuçları</h3>
-                    <div className="text-3xl font-bold text-orange-600 mt-1">{evaluation.score}/100</div>
+                    <div className="text-3xl font-bold text-orange-600 mt-1">{evaluation.score || 0}/100</div>
                   </div>
                 </div>
                 <button
@@ -675,112 +699,134 @@ export default function SpeakingPage() {
 
               <div className="space-y-4">
                 {/* Task Completion */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">✅ Görev Tamamlama</h4>
-                    <span className="text-sm font-bold text-orange-600">{evaluation.taskCompletion.score}/5</span>
+                {evaluation.taskCompletion && (
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900">✅ Görev Tamamlama</h4>
+                      <span className="text-sm font-bold text-orange-600">{evaluation.taskCompletion.score || 0}/5</span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2">{evaluation.taskCompletion.assessment || 'Değerlendirme yapılamadı.'}</p>
+                    {evaluation.taskCompletion.contentDevelopment && (
+                      <p className="text-xs text-gray-600 mb-1">İçerik Geliştirme: {evaluation.taskCompletion.contentDevelopment}</p>
+                    )}
+                    {evaluation.taskCompletion.organization && (
+                      <p className="text-xs text-gray-600 mb-1">Organizasyon: {evaluation.taskCompletion.organization}</p>
+                    )}
+                    {evaluation.taskCompletion.summaryQuality && (
+                      <p className="text-xs text-gray-600 mb-1">Özet Kalitesi: {evaluation.taskCompletion.summaryQuality}</p>
+                    )}
+                    {evaluation.taskCompletion.discussionQuality && (
+                      <p className="text-xs text-gray-600 mb-1">Tartışma Kalitesi: {evaluation.taskCompletion.discussionQuality}</p>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-700 mb-2">{evaluation.taskCompletion.assessment}</p>
-                  {evaluation.taskCompletion.contentDevelopment && (
-                    <p className="text-xs text-gray-600 mb-1">İçerik Geliştirme: {evaluation.taskCompletion.contentDevelopment}</p>
-                  )}
-                  {evaluation.taskCompletion.organization && (
-                    <p className="text-xs text-gray-600 mb-1">Organizasyon: {evaluation.taskCompletion.organization}</p>
-                  )}
-                  {evaluation.taskCompletion.summaryQuality && (
-                    <p className="text-xs text-gray-600 mb-1">Özet Kalitesi: {evaluation.taskCompletion.summaryQuality}</p>
-                  )}
-                  {evaluation.taskCompletion.discussionQuality && (
-                    <p className="text-xs text-gray-600 mb-1">Tartışma Kalitesi: {evaluation.taskCompletion.discussionQuality}</p>
-                  )}
-                </div>
+                )}
 
                 {/* Grammar */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">📝 Dilbilgisi</h4>
-                    <span className="text-sm font-bold text-orange-600">{evaluation.grammar.score}/5</span>
-                  </div>
-                  <p className="text-sm text-gray-700 mb-2">{evaluation.grammar.assessment}</p>
-                  <p className="text-xs text-gray-600 mb-2">Karmaşık Yapılar: {evaluation.grammar.complexStructures}</p>
-                  {evaluation.grammar.errors.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-xs font-medium text-red-600 mb-1">Hatalar:</p>
-                      <ul className="text-xs text-gray-600 space-y-1">
-                        {evaluation.grammar.errors.map((error, i) => (
-                          <li key={i}>• {error}</li>
-                        ))}
-                      </ul>
+                {evaluation.grammar && (
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900">📝 Dilbilgisi</h4>
+                      <span className="text-sm font-bold text-orange-600">{evaluation.grammar.score || 0}/5</span>
                     </div>
-                  )}
-                </div>
+                    <p className="text-sm text-gray-700 mb-2">{evaluation.grammar.assessment || 'Değerlendirme yapılamadı.'}</p>
+                    {evaluation.grammar.complexStructures && (
+                      <p className="text-xs text-gray-600 mb-2">Karmaşık Yapılar: {evaluation.grammar.complexStructures}</p>
+                    )}
+                    {evaluation.grammar.errors && Array.isArray(evaluation.grammar.errors) && evaluation.grammar.errors.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-xs font-medium text-red-600 mb-1">Hatalar:</p>
+                        <ul className="text-xs text-gray-600 space-y-1">
+                          {evaluation.grammar.errors.map((error, i) => (
+                            <li key={i}>• {error}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Vocabulary */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">📚 Kelime Bilgisi</h4>
-                    <span className="text-sm font-bold text-orange-600">{evaluation.vocabulary.score}/5</span>
+                {evaluation.vocabulary && (
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900">📚 Kelime Bilgisi</h4>
+                      <span className="text-sm font-bold text-orange-600">{evaluation.vocabulary.score || 0}/5</span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2">{evaluation.vocabulary.assessment || 'Değerlendirme yapılamadı.'}</p>
+                    {evaluation.vocabulary.range && (
+                      <p className="text-xs text-gray-600 mb-1">Kelime Çeşitliliği: {evaluation.vocabulary.range}</p>
+                    )}
+                    {evaluation.vocabulary.accuracy && (
+                      <p className="text-xs text-gray-600 mb-1">Doğruluk: {evaluation.vocabulary.accuracy}</p>
+                    )}
+                    {evaluation.vocabulary.videoVocabulary && (
+                      <p className="text-xs text-gray-600 mb-1">Video Kelimeleri: {evaluation.vocabulary.videoVocabulary}</p>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-700 mb-2">{evaluation.vocabulary.assessment}</p>
-                  <p className="text-xs text-gray-600 mb-1">Kelime Çeşitliliği: {evaluation.vocabulary.range}</p>
-                  {evaluation.vocabulary.accuracy && (
-                    <p className="text-xs text-gray-600 mb-1">Doğruluk: {evaluation.vocabulary.accuracy}</p>
-                  )}
-                  {evaluation.vocabulary.videoVocabulary && (
-                    <p className="text-xs text-gray-600 mb-1">Video Kelimeleri: {evaluation.vocabulary.videoVocabulary}</p>
-                  )}
-                </div>
+                )}
 
                 {/* Fluency & Pronunciation */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">💬 Akıcılık ve Telaffuz</h4>
-                    <span className="text-sm font-bold text-orange-600">{evaluation.fluency.score}/5</span>
+                {evaluation.fluency && (
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900">💬 Akıcılık ve Telaffuz</h4>
+                      <span className="text-sm font-bold text-orange-600">{evaluation.fluency.score || 0}/5</span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2">{evaluation.fluency.assessment || 'Değerlendirme yapılamadı.'}</p>
+                    {evaluation.fluency.pace && (
+                      <p className="text-xs text-gray-600 mb-1">Hız: {evaluation.fluency.pace}</p>
+                    )}
+                    {evaluation.fluency.hesitations && (
+                      <p className="text-xs text-gray-600 mb-1">Tereddütler: {evaluation.fluency.hesitations}</p>
+                    )}
+                    {evaluation.fluency.pronunciation && (
+                      <p className="text-xs text-gray-600">Telaffuz: {evaluation.fluency.pronunciation}</p>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-700 mb-2">{evaluation.fluency.assessment}</p>
-                  <p className="text-xs text-gray-600 mb-1">Hız: {evaluation.fluency.pace}</p>
-                  <p className="text-xs text-gray-600 mb-1">Tereddütler: {evaluation.fluency.hesitations}</p>
-                  <p className="text-xs text-gray-600">Telaffuz: {evaluation.fluency.pronunciation}</p>
-                </div>
+                )}
 
                 {/* Overall Feedback */}
-                <div className="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">💬 Genel Geri Bildirim</h4>
-                  <p className="text-sm text-gray-700 mb-3">{evaluation.feedback}</p>
-                  
-                  {evaluation.overall.strengths.length > 0 && (
-                    <div className="mb-3">
-                      <p className="text-xs font-medium text-green-700 mb-1">Güçlü Yönler:</p>
-                      <ul className="text-xs text-gray-700 space-y-1">
-                        {evaluation.overall.strengths.map((strength, i) => (
-                          <li key={i}>✓ {strength}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {evaluation.overall.improvements.length > 0 && (
-                    <div className="mb-3">
-                      <p className="text-xs font-medium text-orange-700 mb-1">Geliştirilmesi Gerekenler:</p>
-                      <ul className="text-xs text-gray-700 space-y-1">
-                        {evaluation.overall.improvements.map((improvement, i) => (
-                          <li key={i}>• {improvement}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {evaluation.overall.practiceSuggestions.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-blue-700 mb-1">Pratik Önerileri:</p>
-                      <ul className="text-xs text-gray-700 space-y-1">
-                        {evaluation.overall.practiceSuggestions.map((suggestion, i) => (
-                          <li key={i}>→ {suggestion}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
+                {evaluation.overall && (
+                  <div className="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-2">💬 Genel Geri Bildirim</h4>
+                    {evaluation.feedback && (
+                      <p className="text-sm text-gray-700 mb-3">{evaluation.feedback}</p>
+                    )}
+                    
+                    {evaluation.overall.strengths && Array.isArray(evaluation.overall.strengths) && evaluation.overall.strengths.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs font-medium text-green-700 mb-1">Güçlü Yönler:</p>
+                        <ul className="text-xs text-gray-700 space-y-1">
+                          {evaluation.overall.strengths.map((strength, i) => (
+                            <li key={i}>✓ {strength}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {evaluation.overall.improvements && Array.isArray(evaluation.overall.improvements) && evaluation.overall.improvements.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs font-medium text-orange-700 mb-1">Geliştirilmesi Gerekenler:</p>
+                        <ul className="text-xs text-gray-700 space-y-1">
+                          {evaluation.overall.improvements.map((improvement, i) => (
+                            <li key={i}>• {improvement}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {evaluation.overall.practiceSuggestions && Array.isArray(evaluation.overall.practiceSuggestions) && evaluation.overall.practiceSuggestions.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-blue-700 mb-1">Pratik Önerileri:</p>
+                        <ul className="text-xs text-gray-700 space-y-1">
+                          {evaluation.overall.practiceSuggestions.map((suggestion, i) => (
+                            <li key={i}>→ {suggestion}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
