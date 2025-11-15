@@ -45,6 +45,7 @@ export default function SpeakingPage() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const levelRef = useRef<string>('B2')
   const taskTypeRef = useRef<string>('random')
+  const streamRef = useRef<MediaStream | null>(null)
   const { updateProgress, addTime, completeActivity } = useProgress()
 
   // Update refs when state changes
@@ -75,7 +76,12 @@ export default function SpeakingPage() {
     })
     setAudioChunks([])
     
-    // Stop any active recording
+    // Stop any active recording and cleanup stream
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    
     setMediaRecorder(prevRecorder => {
       if (prevRecorder && prevRecorder.state !== 'inactive') {
         try {
@@ -86,6 +92,14 @@ export default function SpeakingPage() {
       }
       return null
     })
+    
+    // Stop and cleanup media stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        track.stop()
+      })
+      streamRef.current = null
+    }
 
     try {
       const response = await fetch('/api/speaking/generate', {
@@ -95,7 +109,7 @@ export default function SpeakingPage() {
         },
         body: JSON.stringify({
           level: selectedLevel || levelRef.current,
-          taskType: selectedTaskType || taskTypeRef.current === 'random' ? undefined : selectedTaskType || taskTypeRef.current,
+          taskType: selectedTaskType || (taskTypeRef.current === 'random' ? undefined : taskTypeRef.current),
         }),
       })
 
@@ -169,7 +183,11 @@ export default function SpeakingPage() {
       }
 
       const data = await response.json()
-      setTranscript(data.transcript || '')
+      if (data && typeof data.transcript === 'string') {
+        setTranscript(data.transcript)
+      } else {
+        throw new Error('Geçersiz transkript formatı alındı.')
+      }
     } catch (err: any) {
       console.error('Error generating transcript:', err)
       const errorMessage = err.message || 'Transkript oluşturulurken bir hata oluştu.'
@@ -216,23 +234,34 @@ export default function SpeakingPage() {
   }
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorder && isRecording) {
-      mediaRecorder.stop()
+    if (mediaRecorder && mediaRecorder.state !== 'inactive' && isRecording) {
+      try {
+        mediaRecorder.stop()
+        setIsRecording(false)
+      } catch (error) {
+        console.error('Error stopping recording:', error)
+        setIsRecording(false)
+      }
+    } else if (isRecording) {
       setIsRecording(false)
     }
   }, [mediaRecorder, isRecording])
 
   useEffect(() => {
-    if (!currentExercise) return
+    if (!currentExercise || !currentExercise.duration) return
     
     if (isRecording) {
       intervalRef.current = setInterval(() => {
         setTimeElapsed(prev => {
-          if (currentExercise.duration && prev >= currentExercise.duration) {
+          const currentDuration = currentExercise?.duration
+          if (currentDuration && typeof prev === 'number' && prev >= currentDuration) {
             stopRecording()
-            return currentExercise.duration
+            return currentDuration
           }
-          return prev + 1
+          if (typeof prev === 'number' && !isNaN(prev)) {
+            return prev + 1
+          }
+          return 0
         })
       }, 1000)
     } else {
@@ -252,7 +281,14 @@ export default function SpeakingPage() {
 
   const startRecording = async () => {
     try {
+      // Cleanup any existing stream first
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
+        streamRef.current = null
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      streamRef.current = stream
       const recorder = new MediaRecorder(stream)
       const chunks: Blob[] = []
 
@@ -268,10 +304,28 @@ export default function SpeakingPage() {
         setAudioUrl(url)
         setAudioChunks(chunks)
         setRecordingComplete(true)
-        stream.getTracks().forEach(track => track.stop())
+        
+        // Stop stream tracks
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop())
+          streamRef.current = null
+        }
         
         // Automatically generate transcript
-        await generateTranscript(blob)
+        try {
+          await generateTranscript(blob)
+        } catch (error) {
+          console.error('Error generating transcript:', error)
+        }
+      }
+
+      recorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event)
+        setIsRecording(false)
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop())
+          streamRef.current = null
+        }
       }
 
       recorder.start()
@@ -283,6 +337,11 @@ export default function SpeakingPage() {
       setTranscript('')
     } catch (error) {
       console.error('Error accessing microphone:', error)
+      setIsRecording(false)
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
+        streamRef.current = null
+      }
       alert('Mikrofon erişimi için izin gerekli. Lütfen tarayıcı ayarlarınızdan mikrofon iznini verin.')
     }
   }
@@ -310,14 +369,26 @@ export default function SpeakingPage() {
         console.error('Error stopping mediaRecorder:', error)
       }
     }
+    // Cleanup stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
   }
 
   const handleSubmit = () => {
-    if (recordingComplete && currentExercise && currentExercise.duration) {
-      const timeSpent = Math.round(timeElapsed / 60)
-      updateProgress('speaking', Math.min(100, (timeElapsed / currentExercise.duration) * 50 + 25))
-      addTime(timeSpent)
-      completeActivity()
+    if (recordingComplete && currentExercise && currentExercise.duration && typeof timeElapsed === 'number') {
+      try {
+        const timeSpent = Math.round(timeElapsed / 60)
+        const progressValue = Math.min(100, Math.max(0, (timeElapsed / currentExercise.duration) * 50 + 25))
+        updateProgress('speaking', progressValue)
+        if (timeSpent > 0) {
+          addTime(timeSpent)
+        }
+        completeActivity()
+      } catch (error) {
+        console.error('Error in handleSubmit:', error)
+      }
     }
   }
 
@@ -343,16 +414,25 @@ export default function SpeakingPage() {
     try {
       const result = await evaluateSpeaking(transcript, currentExercise.prompt, currentExercise.level)
       
-      if (!result || typeof result.score !== 'number') {
+      if (!result || typeof result !== 'object' || typeof result.score !== 'number') {
         throw new Error('Geçersiz değerlendirme sonucu alındı.')
+      }
+      
+      // Validate result structure
+      if (!result.taskCompletion || !result.grammar || !result.vocabulary || !result.fluency || !result.overall) {
+        throw new Error('Eksik değerlendirme verisi alındı.')
       }
       
       setEvaluation(result)
       setShowEvaluation(true)
       
       // İlerlemeyi güncelle
-      updateProgress('speaking', Math.min(100, result.score))
-      addTime(Math.round(timeElapsed / 60))
+      if (typeof result.score === 'number' && !isNaN(result.score)) {
+        updateProgress('speaking', Math.min(100, Math.max(0, result.score)))
+      }
+      if (typeof timeElapsed === 'number' && !isNaN(timeElapsed)) {
+        addTime(Math.round(timeElapsed / 60))
+      }
       completeActivity()
     } catch (error) {
       console.error('Evaluation error:', error)
@@ -369,16 +449,40 @@ export default function SpeakingPage() {
     }
   }
 
-  // Cleanup audio URL on unmount or exercise change
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // Cleanup interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      
+      // Cleanup audio URL
       if (audioUrl) {
         URL.revokeObjectURL(audioUrl)
       }
+      
+      // Cleanup media recorder
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        try {
+          mediaRecorder.stop()
+        } catch (error) {
+          console.error('Error stopping mediaRecorder on unmount:', error)
+        }
+      }
+      
+      // Cleanup stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
+        streamRef.current = null
+      }
     }
-  }, [audioUrl])
+  }, [audioUrl, mediaRecorder])
 
-  const progress = currentExercise && currentExercise.duration ? (timeElapsed / currentExercise.duration) * 100 : 0
+  const progress = currentExercise && currentExercise.duration && typeof timeElapsed === 'number' && !isNaN(timeElapsed)
+    ? Math.min(100, Math.max(0, (timeElapsed / currentExercise.duration) * 100))
+    : 0
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -551,7 +655,7 @@ export default function SpeakingPage() {
             </button>
           </div>
 
-          {isRecording && currentExercise.duration && (
+          {isRecording && currentExercise && currentExercise.duration && typeof timeElapsed === 'number' && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

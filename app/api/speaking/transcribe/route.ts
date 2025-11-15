@@ -36,18 +36,23 @@ export async function POST(request: NextRequest) {
 
     const openai = getOpenAIClient()
 
-    // Convert File to Blob for OpenAI API (Node.js compatible)
-    const arrayBuffer = await audioFile.arrayBuffer()
-    const blob = new Blob([arrayBuffer], { type: audioFile.type })
-
-    // Transcribe audio using OpenAI Whisper
-    // OpenAI SDK accepts File, Blob, or ReadableStream
-    const transcription = await openai.audio.transcriptions.create({
-      file: blob as any, // Type assertion for compatibility
+    // OpenAI SDK accepts File objects directly from FormData in Next.js
+    // The File from FormData should work, but we'll handle it properly
+    const result = await openai.audio.transcriptions.create({
+      file: audioFile as any, // Type assertion for compatibility
       model: 'whisper-1',
       language: 'en', // English
       response_format: 'text',
     })
+
+    // Handle response - OpenAI returns string when response_format is 'text'
+    const transcription = typeof result === 'string' 
+      ? result 
+      : (result as any)?.text || String(result || '')
+
+    if (!transcription || transcription.trim() === '') {
+      throw new Error('Boş transkript alındı. Lütfen tekrar deneyin.')
+    }
 
     return NextResponse.json({ 
       transcript: transcription 
