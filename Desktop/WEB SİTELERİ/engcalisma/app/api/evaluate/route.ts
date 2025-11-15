@@ -179,9 +179,9 @@ Format your response as JSON with the following structure:
     }
 
     // Validate evaluation structure
-    if (!evaluation.score && evaluation.score !== 0) {
+    if (typeof evaluation.score !== 'number' || evaluation.score < 0 || evaluation.score > 100) {
       return NextResponse.json(
-        { error: 'Invalid evaluation response: missing score' },
+        { error: 'Invalid evaluation response: score must be a number between 0 and 100' },
         { status: 500 }
       )
     }

@@ -146,15 +146,17 @@ export default function ListeningPage() {
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
-  }, [isPlaying, exercise?.duration])
+  }, [isPlaying, exercise])
 
   if (!exercise) {
     return <div className="container mx-auto px-4 py-8">Yükleniyor...</div>
@@ -172,6 +174,10 @@ export default function ListeningPage() {
     setIsPlaying(false)
     setTimeElapsed(0)
     setShowTranscript(false)
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
   }
 
   const handleAnswerSelect = (questionId: number, optionIndex: number) => {
@@ -408,4 +414,5 @@ export default function ListeningPage() {
     </div>
   )
 }
+
 

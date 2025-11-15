@@ -101,15 +101,17 @@ export default function SpeakingPage() {
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
-  }, [isRecording, exercise?.duration, stopRecording])
+  }, [isRecording, exercise, stopRecording])
 
   if (!exercise) {
     return <div className="container mx-auto px-4 py-8">Yükleniyor...</div>
@@ -152,13 +154,24 @@ export default function SpeakingPage() {
     setIsRecording(false)
     setTimeElapsed(0)
     setRecordingComplete(false)
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl)
+    }
     setAudioUrl(null)
     setAudioChunks([])
     setTranscript('')
     setShowEvaluation(false)
     setEvaluation(null)
-    if (mediaRecorder) {
-      mediaRecorder.stop()
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      try {
+        mediaRecorder.stop()
+      } catch (error) {
+        console.error('Error stopping mediaRecorder:', error)
+      }
     }
   }
 
@@ -197,6 +210,15 @@ export default function SpeakingPage() {
       setEvaluating(false)
     }
   }
+
+  // Cleanup audio URL on unmount or exercise change
+  useEffect(() => {
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl)
+      }
+    }
+  }, [audioUrl])
 
   const handleNext = () => {
     if (currentExercise < speakingExercises.length - 1) {
@@ -521,4 +543,5 @@ export default function SpeakingPage() {
     </div>
   )
 }
+
 

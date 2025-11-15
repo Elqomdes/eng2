@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { PenTool, Save, CheckCircle, Lightbulb, Clock, Sparkles, Loader2, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProgress } from '@/components/ProgressProvider'
@@ -70,6 +70,11 @@ export default function WritingPage() {
   const { updateProgress, addTime, completeActivity } = useProgress()
 
   const prompt = writingPrompts[currentPrompt]
+
+  // Reset start time when prompt changes
+  useEffect(() => {
+    startTimeRef.current = Date.now()
+  }, [currentPrompt])
 
   if (!prompt) {
     return <div className="container mx-auto px-4 py-8">Yükleniyor...</div>
