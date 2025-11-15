@@ -1,23 +1,32 @@
 export interface WritingEvaluation {
   score: number
+  content: {
+    score: number
+    assessment: string
+    referenceQuality?: string
+    opinionQuality?: string
+    summaryQuality?: string
+    connectionQuality?: string
+  }
   grammar: {
+    score: number
     assessment: string
     errors: string[]
-    examples: string[]
+    complexStructures: string
   }
   vocabulary: {
+    score: number
     assessment: string
-    strengths: string[]
+    range: string
+    collocationalExpressions?: string
+    resourceUsage?: string
     suggestions: string[]
   }
-  structure: {
+  coherence: {
+    score: number
     assessment: string
-    strengths: string[]
-    improvements: string[]
-  }
-  content: {
-    assessment: string
-    relevance: string
+    flow: string
+    cohesiveDevices: string
   }
   overall: {
     strengths: string[]
@@ -29,32 +38,34 @@ export interface WritingEvaluation {
 
 export interface SpeakingEvaluation {
   score: number
-  pronunciation: {
+  taskCompletion: {
+    score: number
     assessment: string
-    strengths: string[]
-    issues: string[]
+    contentDevelopment?: string
+    organization?: string
+    summaryQuality?: string
+    discussionQuality?: string
+  }
+  grammar: {
+    score: number
+    assessment: string
+    errors: string[]
+    complexStructures: string
+  }
+  vocabulary: {
+    score: number
+    assessment: string
+    range: string
+    accuracy?: string
+    videoVocabulary?: string
     suggestions: string[]
   }
   fluency: {
+    score: number
     assessment: string
     pace: string
     hesitations: string
-    suggestions: string[]
-  }
-  grammar: {
-    assessment: string
-    errors: string[]
-    suggestions: string[]
-  }
-  vocabulary: {
-    assessment: string
-    strengths: string[]
-    suggestions: string[]
-  }
-  content: {
-    assessment: string
-    relevance: string
-    ideas: string
+    pronunciation: string
   }
   overall: {
     strengths: string[]

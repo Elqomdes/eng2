@@ -34,43 +34,61 @@ export async function POST(request: NextRequest) {
     let evaluationPrompt = ''
 
     if (type === 'writing') {
-      evaluationPrompt = `You are an English language teacher evaluating a student's writing. 
+      // Determine if this is Task 1 (Independent) or Task 2 (Integrated)
+      const isTask1 = prompt.includes('social media') || prompt.includes('post') || prompt.includes('comment')
+      const isTask2 = prompt.includes('graph') || prompt.includes('podcast') || prompt.includes('visual') || prompt.includes('audio')
       
+      if (isTask2) {
+        // Integrated Writing Task 2 - Graph + Podcast
+        evaluationPrompt = `You are an English language teacher evaluating a student's writing using the e-TEP Integrated Writing Rating Scale for Task 2.
+
 Student Level: ${level}
 Writing Prompt: ${prompt}
 Student's Writing: ${content}
 
-Please provide a comprehensive evaluation in Turkish (for the student) that includes:
-1. Overall Score (0-100)
-2. Grammar Assessment (with specific examples of errors)
-3. Vocabulary Assessment (word choice and variety)
-4. Structure and Organization
-5. Content Quality (how well they addressed the prompt)
-6. Specific Strengths
-7. Areas for Improvement
-8. Suggestions for next steps
+Evaluate the student's writing according to the e-TEP Integrated Writing Task 2 rating scale (0-5 points) across four criteria:
+1. Content: How well they summarize the podcast points and connect them with the visual/graph
+2. Grammar: Grammatical accuracy and control of complex structures
+3. Vocabulary: Range and accuracy of vocabulary from both resources and individual repertoire
+4. Coherence & Cohesion: How well ideas flow and connect
+
+For each criterion, assign a score from 0-5 based on the e-TEP descriptors:
+- 5: Addresses to fullest extent, comprehensive summary, clear connections
+- 4: Addresses to large extent, well-developed summary
+- 3: Addresses to adequate extent, some connections
+- 2: Addresses to limited extent, weak connections
+- 1: Addresses to very limited extent
+- 0: Insufficient or irrelevant response
+
+Calculate overall score (0-100) based on the average of the four criteria.
 
 Format your response as JSON with the following structure:
 {
-  "score": number,
+  "score": number (0-100),
+  "content": {
+    "score": number (0-5),
+    "assessment": "string",
+    "summaryQuality": "string",
+    "connectionQuality": "string"
+  },
   "grammar": {
+    "score": number (0-5),
     "assessment": "string",
     "errors": ["string"],
-    "examples": ["string"]
+    "complexStructures": "string"
   },
   "vocabulary": {
+    "score": number (0-5),
     "assessment": "string",
-    "strengths": ["string"],
+    "resourceUsage": "string",
+    "range": "string",
     "suggestions": ["string"]
   },
-  "structure": {
+  "coherence": {
+    "score": number (0-5),
     "assessment": "string",
-    "strengths": ["string"],
-    "improvements": ["string"]
-  },
-  "content": {
-    "assessment": "string",
-    "relevance": "string"
+    "flow": "string",
+    "cohesiveDevices": "string"
   },
   "overall": {
     "strengths": ["string"],
@@ -79,52 +97,122 @@ Format your response as JSON with the following structure:
   },
   "feedback": "string (overall feedback in Turkish)"
 }`
+      } else {
+        // Integrated Writing Task 1 - Social Media Post Response
+        evaluationPrompt = `You are an English language teacher evaluating a student's writing using the e-TEP Integrated Writing Rating Scale for Task 1.
+
+Student Level: ${level}
+Writing Prompt: ${prompt}
+Student's Writing: ${content}
+
+Evaluate the student's writing according to the e-TEP Integrated Writing Task 1 rating scale (0-5 points) across four criteria:
+1. Content: How well they refer to the post/comment and express personal opinion
+2. Grammar: Grammatical accuracy and control of complex structures
+3. Vocabulary: Range and accuracy of vocabulary, including collocational expressions
+4. Coherence & Cohesion: How well ideas flow and connect
+
+For each criterion, assign a score from 0-5 based on the e-TEP descriptors:
+- 5: Addresses to fullest extent, refers explicitly to both post and comment, well-supported ideas
+- 4: Addresses to large extent, refers to post/comment to large extent
+- 3: Addresses to adequate extent, refers to some extent
+- 2: Addresses to limited extent, limited reference
+- 1: Addresses to minimal extent, very limited reference
+- 0: Insufficient or completely lifted/irrelevant response
+
+Calculate overall score (0-100) based on the average of the four criteria.
+
+Format your response as JSON with the following structure:
+{
+  "score": number (0-100),
+  "content": {
+    "score": number (0-5),
+    "assessment": "string",
+    "referenceQuality": "string",
+    "opinionQuality": "string"
+  },
+  "grammar": {
+    "score": number (0-5),
+    "assessment": "string",
+    "errors": ["string"],
+    "complexStructures": "string"
+  },
+  "vocabulary": {
+    "score": number (0-5),
+    "assessment": "string",
+    "range": "string",
+    "collocationalExpressions": "string",
+    "suggestions": ["string"]
+  },
+  "coherence": {
+    "score": number (0-5),
+    "assessment": "string",
+    "flow": "string",
+    "cohesiveDevices": "string"
+  },
+  "overall": {
+    "strengths": ["string"],
+    "improvements": ["string"],
+    "nextSteps": ["string"]
+  },
+  "feedback": "string (overall feedback in Turkish)"
+}`
+      }
     } else if (type === 'speaking') {
-      evaluationPrompt = `You are an English language teacher evaluating a student's speaking practice. 
+      // Determine if this is Independent or Integrated speaking task
+      const isIntegrated = prompt.includes('video') || prompt.includes('watch') || prompt.includes('integrated')
+      
+      if (isIntegrated) {
+        // Integrated Speaking - Video-based task
+        evaluationPrompt = `You are an English language teacher evaluating a student's speaking using the e-TEP Integrated Speaking Rating Scale.
 
 Student Level: ${level}
 Speaking Prompt: ${prompt}
 Student's Transcript: ${content}
 
-Please provide a comprehensive evaluation in Turkish (for the student) that includes:
-1. Overall Score (0-100)
-2. Pronunciation Assessment
-3. Fluency Assessment
-4. Grammar and Vocabulary Usage
-5. Content and Ideas
-6. Specific Strengths
-7. Areas for Improvement
-8. Practice Suggestions
+Evaluate the student's speaking according to the e-TEP Integrated Speaking rating scale (0-5 points) across four criteria:
+1. Task Completion: How well they summarize the video and discuss/reflect on the topic
+2. Grammar: Control of grammatical structures
+3. Vocabulary: Range and accuracy, including appropriate use of video vocabulary
+4. Fluency & Pronunciation: Flow, pace, and pronunciation features
+
+For each criterion, assign a score from 0-5 based on the e-TEP descriptors:
+- 5: Addresses to fullest extent, comprehensive summary, deeply elaborated discussion
+- 4: Addresses to large extent, well-developed summary, elaborated discussion
+- 3: Addresses to adequate extent, some omissions, some new perspectives
+- 2: Addresses to limited extent, missing/incomplete summary, limited discussion
+- 1: Addresses to minimal extent, touches upon few moves
+- 0: Off topic, memorized, insufficient, inaudible, technical issues
+
+Calculate overall score (0-100) based on the average of the four criteria.
 
 Format your response as JSON with the following structure:
 {
-  "score": number,
-  "pronunciation": {
+  "score": number (0-100),
+  "taskCompletion": {
+    "score": number (0-5),
     "assessment": "string",
-    "strengths": ["string"],
-    "issues": ["string"],
+    "summaryQuality": "string",
+    "discussionQuality": "string"
+  },
+  "grammar": {
+    "score": number (0-5),
+    "assessment": "string",
+    "errors": ["string"],
+    "complexStructures": "string"
+  },
+  "vocabulary": {
+    "score": number (0-5),
+    "assessment": "string",
+    "videoVocabulary": "string",
+    "range": "string",
     "suggestions": ["string"]
   },
   "fluency": {
+    "score": number (0-5),
     "assessment": "string",
     "pace": "string",
     "hesitations": "string",
-    "suggestions": ["string"]
-  },
-  "grammar": {
-    "assessment": "string",
-    "errors": ["string"],
-    "suggestions": ["string"]
-  },
-  "vocabulary": {
-    "assessment": "string",
-    "strengths": ["string"],
-    "suggestions": ["string"]
-  },
-  "content": {
-    "assessment": "string",
-    "relevance": "string",
-    "ideas": "string"
+    "pronunciation": "string"
   },
   "overall": {
     "strengths": ["string"],
@@ -133,6 +221,67 @@ Format your response as JSON with the following structure:
   },
   "feedback": "string (overall feedback in Turkish)"
 }`
+      } else {
+        // Independent Speaking
+        evaluationPrompt = `You are an English language teacher evaluating a student's speaking using the e-TEP Independent Speaking Rating Scale.
+
+Student Level: ${level}
+Speaking Prompt: ${prompt}
+Student's Transcript: ${content}
+
+Evaluate the student's speaking according to the e-TEP Independent Speaking rating scale (0-5 points) across four criteria:
+1. Task Completion: How well they respond to the task, develop content, and organize discourse
+2. Grammar: Control of grammatical structures
+3. Vocabulary: Range and accuracy of vocabulary
+4. Fluency & Pronunciation: Flow, pace, and pronunciation features
+
+For each criterion, assign a score from 0-5 based on the e-TEP descriptors:
+- 5: Responds to fullest extent, content beyond personal experiences, well-organized
+- 4: Responds to large extent, content beyond personal experiences, generally organized
+- 3: Responds to adequate extent, some content beyond personal experiences, somewhat organized
+- 2: Responds to limited extent, mainly personal experiences, partially organized
+- 1: Responds to minimal extent, basic personal experiences, minimal organization
+- 0: Off topic, memorized, insufficient, inaudible, technical issues
+
+Calculate overall score (0-100) based on the average of the four criteria.
+
+Format your response as JSON with the following structure:
+{
+  "score": number (0-100),
+  "taskCompletion": {
+    "score": number (0-5),
+    "assessment": "string",
+    "contentDevelopment": "string",
+    "organization": "string"
+  },
+  "grammar": {
+    "score": number (0-5),
+    "assessment": "string",
+    "errors": ["string"],
+    "complexStructures": "string"
+  },
+  "vocabulary": {
+    "score": number (0-5),
+    "assessment": "string",
+    "range": "string",
+    "accuracy": "string",
+    "suggestions": ["string"]
+  },
+  "fluency": {
+    "score": number (0-5),
+    "assessment": "string",
+    "pace": "string",
+    "hesitations": "string",
+    "pronunciation": "string"
+  },
+  "overall": {
+    "strengths": ["string"],
+    "improvements": ["string"],
+    "practiceSuggestions": ["string"]
+  },
+  "feedback": "string (overall feedback in Turkish)"
+}`
+      }
     } else {
       return NextResponse.json(
         { error: 'Invalid evaluation type' },

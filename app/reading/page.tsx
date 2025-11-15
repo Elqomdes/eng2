@@ -5,17 +5,43 @@ import { BookOpen, CheckCircle, XCircle, ArrowRight, ArrowLeft } from 'lucide-re
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProgress } from '@/components/ProgressProvider'
 
+type QuestionType = 'multiple-choice' | 'matching' | 'ordering'
+
+interface BaseQuestion {
+  id: number
+  type: QuestionType
+}
+
+interface MultipleChoiceQuestion extends BaseQuestion {
+  type: 'multiple-choice'
+  question: string
+  options: string[]
+  correct: number
+}
+
+interface MatchingQuestion extends BaseQuestion {
+  type: 'matching'
+  instruction: string
+  items: string[]
+  matches: { [key: number]: number } // item index -> paragraph index
+  paragraphs: string[]
+}
+
+interface OrderingQuestion extends BaseQuestion {
+  type: 'ordering'
+  instruction: string
+  parts: string[]
+  correctOrder: number[]
+}
+
+type Question = MultipleChoiceQuestion | MatchingQuestion | OrderingQuestion
+
 interface ReadingPassage {
   id: number
   title: string
   level: string
   content: string
-  questions: {
-    id: number
-    question: string
-    options: string[]
-    correct: number
-  }[]
+  questions: Question[]
 }
 
 const readingPassages: ReadingPassage[] = [
@@ -33,6 +59,7 @@ Finally, reading is a source of entertainment. Whether you enjoy fiction, non-fi
     questions: [
       {
         id: 1,
+        type: 'multiple-choice' as const,
         question: 'What is one benefit of reading mentioned in the text?',
         options: [
           'It makes you taller',
@@ -44,6 +71,7 @@ Finally, reading is a source of entertainment. Whether you enjoy fiction, non-fi
       },
       {
         id: 2,
+        type: 'multiple-choice' as const,
         question: 'How much can reading reduce stress levels?',
         options: [
           'Up to 50%',
@@ -55,6 +83,7 @@ Finally, reading is a source of entertainment. Whether you enjoy fiction, non-fi
       },
       {
         id: 3,
+        type: 'multiple-choice' as const,
         question: 'What does reading help prevent?',
         options: [
           'Physical illness',
@@ -80,6 +109,7 @@ Addressing climate change requires global cooperation. Countries must work toget
     questions: [
       {
         id: 4,
+        type: 'multiple-choice' as const,
         question: 'What is the primary cause of recent climate change?',
         options: [
           'Natural disasters',
@@ -91,6 +121,7 @@ Addressing climate change requires global cooperation. Countries must work toget
       },
       {
         id: 5,
+        type: 'multiple-choice' as const,
         question: 'What percentage of marine species live in coral reefs?',
         options: [
           '10%',
@@ -102,6 +133,7 @@ Addressing climate change requires global cooperation. Countries must work toget
       },
       {
         id: 6,
+        type: 'multiple-choice' as const,
         question: 'What is required to address climate change?',
         options: [
           'Individual action only',
@@ -117,7 +149,7 @@ Addressing climate change requires global cooperation. Countries must work toget
 
 export default function ReadingPage() {
   const [currentPassage, setCurrentPassage] = useState(0)
-  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number }>({})
+  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number | number[] }>({})
   const [showResults, setShowResults] = useState(false)
   const [score, setScore] = useState(0)
   const { updateProgress, addTime, completeActivity } = useProgress()
@@ -135,11 +167,52 @@ export default function ReadingPage() {
     })
   }
 
+  const handleMatchingSelect = (questionId: number, itemIndex: number, paragraphIndex: number) => {
+    const currentMatches = (selectedAnswers[questionId] as { [key: number]: number }) || {}
+    setSelectedAnswers({
+      ...selectedAnswers,
+      [questionId]: {
+        ...currentMatches,
+        [itemIndex]: paragraphIndex
+      }
+    })
+  }
+
+  const handleOrderingChange = (questionId: number, fromIndex: number, toIndex: number) => {
+    const currentOrder = (selectedAnswers[questionId] as number[]) || []
+    const newOrder = [...currentOrder]
+    const [removed] = newOrder.splice(fromIndex, 1)
+    newOrder.splice(toIndex, 0, removed)
+    setSelectedAnswers({
+      ...selectedAnswers,
+      [questionId]: newOrder
+    })
+  }
+
   const handleSubmit = () => {
     let correct = 0
     passage.questions.forEach(q => {
-      if (selectedAnswers[q.id] === q.correct) {
-        correct++
+      if (q.type === 'multiple-choice') {
+        if (selectedAnswers[q.id] === q.correct) {
+          correct++
+        }
+      } else if (q.type === 'matching') {
+        const matches = selectedAnswers[q.id] as { [key: number]: number } || {}
+        let matchCorrect = true
+        Object.keys(q.matches).forEach(key => {
+          if (matches[parseInt(key)] !== q.matches[parseInt(key)]) {
+            matchCorrect = false
+          }
+        })
+        if (matchCorrect && Object.keys(matches).length === Object.keys(q.matches).length) {
+          correct++
+        }
+      } else if (q.type === 'ordering') {
+        const order = selectedAnswers[q.id] as number[] || []
+        if (order.length === q.correctOrder.length && 
+            order.every((val, idx) => val === q.correctOrder[idx])) {
+          correct++
+        }
       }
     })
     setScore(correct)
@@ -205,54 +278,161 @@ export default function ReadingPage() {
         <div className="border-t pt-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">Sorular</h3>
           <div className="space-y-4">
-            {passage.questions.map((question) => (
-              <div key={question.id} className="border rounded-lg p-4">
-                <p className="font-medium text-gray-900 mb-3">{question.question}</p>
-                <div className="space-y-2">
-                  {question.options.map((option, index) => {
-                    const isSelected = selectedAnswers[question.id] === index
-                    const isCorrect = showResults && index === question.correct
-                    const isWrong = showResults && isSelected && index !== question.correct
-                    
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => !showResults && handleAnswerSelect(question.id, index)}
-                        disabled={showResults}
-                        className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                          isSelected
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        } ${
-                          isCorrect ? 'border-green-500 bg-green-50' : ''
-                        } ${
-                          isWrong ? 'border-red-500 bg-red-50' : ''
-                        } ${showResults ? 'cursor-default' : 'cursor-pointer'}`}
-                      >
-                        <div className="flex items-center space-x-2">
-                          {showResults && isCorrect && (
+            {passage.questions.map((question) => {
+              if (question.type === 'multiple-choice') {
+                return (
+                  <div key={question.id} className="border rounded-lg p-4">
+                    <p className="font-medium text-gray-900 mb-3">{question.question}</p>
+                    <div className="space-y-2">
+                      {question.options.map((option, index) => {
+                        const isSelected = selectedAnswers[question.id] === index
+                        const isCorrect = showResults && index === question.correct
+                        const isWrong = showResults && isSelected && index !== question.correct
+                        
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => !showResults && handleAnswerSelect(question.id, index)}
+                            disabled={showResults}
+                            className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                              isSelected
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            } ${
+                              isCorrect ? 'border-green-500 bg-green-50' : ''
+                            } ${
+                              isWrong ? 'border-red-500 bg-red-50' : ''
+                            } ${showResults ? 'cursor-default' : 'cursor-pointer'}`}
+                          >
+                            <div className="flex items-center space-x-2">
+                              {showResults && isCorrect && (
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                              )}
+                              {showResults && isWrong && (
+                                <XCircle className="w-5 h-5 text-red-600" />
+                              )}
+                              <span className={showResults && isCorrect ? 'font-semibold text-green-700' : showResults && isWrong ? 'text-red-700' : 'text-gray-700'}>
+                                {option}
+                              </span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              } else if (question.type === 'matching') {
+                const matches = (selectedAnswers[question.id] as { [key: number]: number }) || {}
+                return (
+                  <div key={question.id} className="border rounded-lg p-4">
+                    <p className="font-medium text-gray-900 mb-3">{question.instruction}</p>
+                    <div className="space-y-3">
+                      {question.items.map((item, itemIndex) => (
+                        <div key={itemIndex} className="flex items-center space-x-3">
+                          <span className="font-medium text-gray-700 w-32">{item}</span>
+                          <select
+                            value={matches[itemIndex] !== undefined ? matches[itemIndex] : ''}
+                            onChange={(e) => !showResults && handleMatchingSelect(question.id, itemIndex, parseInt(e.target.value))}
+                            disabled={showResults}
+                            className={`flex-1 p-2 border-2 rounded-lg ${
+                              showResults && matches[itemIndex] === question.matches[itemIndex]
+                                ? 'border-green-500 bg-green-50'
+                                : showResults && matches[itemIndex] !== question.matches[itemIndex]
+                                ? 'border-red-500 bg-red-50'
+                                : 'border-gray-200'
+                            }`}
+                          >
+                            <option value="">Seçiniz...</option>
+                            {question.paragraphs.map((para, paraIndex) => (
+                              <option key={paraIndex} value={paraIndex}>
+                                {para}
+                              </option>
+                            ))}
+                          </select>
+                          {showResults && matches[itemIndex] === question.matches[itemIndex] && (
                             <CheckCircle className="w-5 h-5 text-green-600" />
                           )}
-                          {showResults && isWrong && (
+                          {showResults && matches[itemIndex] !== undefined && matches[itemIndex] !== question.matches[itemIndex] && (
                             <XCircle className="w-5 h-5 text-red-600" />
                           )}
-                          <span className={showResults && isCorrect ? 'font-semibold text-green-700' : showResults && isWrong ? 'text-red-700' : 'text-gray-700'}>
-                            {option}
-                          </span>
                         </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
+                      ))}
+                    </div>
+                  </div>
+                )
+              } else if (question.type === 'ordering') {
+                const order = (selectedAnswers[question.id] as number[]) || []
+                return (
+                  <div key={question.id} className="border rounded-lg p-4">
+                    <p className="font-medium text-gray-900 mb-3">{question.instruction}</p>
+                    <div className="space-y-2">
+                      {question.parts.map((part, index) => {
+                        const currentPosition = order.indexOf(index)
+                        const isCorrect = showResults && currentPosition === question.correctOrder.indexOf(index)
+                        const isWrong = showResults && currentPosition !== -1 && currentPosition !== question.correctOrder.indexOf(index)
+                        return (
+                          <div
+                            key={index}
+                            draggable={!showResults}
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('text/plain', index.toString())
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault()
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault()
+                              const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'))
+                              const dropIndex = order.indexOf(index) !== -1 ? order.indexOf(index) : order.length
+                              handleOrderingChange(question.id, order.indexOf(draggedIndex), dropIndex)
+                            }}
+                            className={`p-3 rounded-lg border-2 transition-all ${
+                              isCorrect ? 'border-green-500 bg-green-50' : ''
+                            } ${
+                              isWrong ? 'border-red-500 bg-red-50' : ''
+                            } ${
+                              !showResults ? 'border-gray-200 hover:border-blue-300 cursor-move' : 'border-gray-200'
+                            }`}
+                          >
+                            <div className="flex items-center space-x-2">
+                              {showResults && isCorrect && (
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                              )}
+                              {showResults && isWrong && (
+                                <XCircle className="w-5 h-5 text-red-600" />
+                              )}
+                              <span className="text-gray-700">{part}</span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {!showResults && order.length > 0 && (
+                      <p className="text-sm text-gray-500 mt-2">Sıralama: {order.map(i => i + 1).join(' → ')}</p>
+                    )}
+                  </div>
+                )
+              }
+              return null
+            })}
           </div>
         </div>
 
         {!showResults ? (
           <button
             onClick={handleSubmit}
-            disabled={Object.keys(selectedAnswers).length !== passage.questions.length}
+            disabled={passage.questions.some(q => {
+              if (q.type === 'multiple-choice') {
+                return selectedAnswers[q.id] === undefined
+              } else if (q.type === 'matching') {
+                const matches = selectedAnswers[q.id] as { [key: number]: number } || {}
+                return Object.keys(matches).length !== q.items.length
+              } else if (q.type === 'ordering') {
+                const order = selectedAnswers[q.id] as number[] || []
+                return order.length !== q.parts.length
+              }
+              return true
+            })}
             className="mt-6 w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cevapları Gönder

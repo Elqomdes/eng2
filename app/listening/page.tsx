@@ -5,17 +5,36 @@ import { Headphones, Play, Pause, RotateCcw, CheckCircle, XCircle } from 'lucide
 import { motion } from 'framer-motion'
 import { useProgress } from '@/components/ProgressProvider'
 
+type ListeningQuestionType = 'multiple-choice' | 'matching'
+
+interface BaseListeningQuestion {
+  id: number
+  type: ListeningQuestionType
+}
+
+interface MultipleChoiceListeningQuestion extends BaseListeningQuestion {
+  type: 'multiple-choice'
+  question: string
+  options: string[]
+  correct: number
+}
+
+interface MatchingListeningQuestion extends BaseListeningQuestion {
+  type: 'matching'
+  instruction: string
+  speakers: string[]
+  statements: string[]
+  matches: { [key: number]: number } // speaker index -> statement index
+}
+
+type ListeningQuestion = MultipleChoiceListeningQuestion | MatchingListeningQuestion
+
 interface ListeningExercise {
   id: number
   title: string
   level: string
   transcript: string
-  questions: {
-    id: number
-    question: string
-    options: string[]
-    correct: number
-  }[]
+  questions: ListeningQuestion[]
   duration: number
 }
 
@@ -34,6 +53,7 @@ Sarah: Perfect! I'll see you there.`,
     questions: [
       {
         id: 1,
+        type: 'multiple-choice' as const,
         question: 'What is Tom planning to do on Saturday?',
         options: [
           'Go to the park',
@@ -45,6 +65,7 @@ Sarah: Perfect! I'll see you there.`,
       },
       {
         id: 2,
+        type: 'multiple-choice' as const,
         question: 'What time will they meet?',
         options: [
           '12 PM',
@@ -56,6 +77,7 @@ Sarah: Perfect! I'll see you there.`,
       },
       {
         id: 3,
+        type: 'multiple-choice' as const,
         question: 'Where will they meet?',
         options: [
           'At the park',
@@ -81,6 +103,7 @@ Candidate: Yes, I'd like to know more about the team structure and what opportun
     questions: [
       {
         id: 4,
+        type: 'multiple-choice' as const,
         question: 'What is the candidate\'s educational background?',
         options: [
           'Business degree',
@@ -92,6 +115,7 @@ Candidate: Yes, I'd like to know more about the team structure and what opportun
       },
       {
         id: 5,
+        type: 'multiple-choice' as const,
         question: 'What does the candidate find most interesting about the position?',
         options: [
           'The salary',
@@ -103,6 +127,7 @@ Candidate: Yes, I'd like to know more about the team structure and what opportun
       },
       {
         id: 6,
+        type: 'multiple-choice' as const,
         question: 'What does the candidate ask about?',
         options: [
           'Salary and benefits',
@@ -121,7 +146,7 @@ export default function ListeningPage() {
   const [currentExercise, setCurrentExercise] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [timeElapsed, setTimeElapsed] = useState(0)
-  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number }>({})
+  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number | { [key: number]: number } }>({})
   const [showResults, setShowResults] = useState(false)
   const [score, setScore] = useState(0)
   const [showTranscript, setShowTranscript] = useState(false)
@@ -187,11 +212,35 @@ export default function ListeningPage() {
     })
   }
 
+  const handleMatchingSelect = (questionId: number, speakerIndex: number, statementIndex: number) => {
+    const currentMatches = (selectedAnswers[questionId] as { [key: number]: number }) || {}
+    setSelectedAnswers({
+      ...selectedAnswers,
+      [questionId]: {
+        ...currentMatches,
+        [speakerIndex]: statementIndex
+      }
+    })
+  }
+
   const handleSubmit = () => {
     let correct = 0
     exercise.questions.forEach(q => {
-      if (selectedAnswers[q.id] === q.correct) {
-        correct++
+      if (q.type === 'multiple-choice') {
+        if (selectedAnswers[q.id] === q.correct) {
+          correct++
+        }
+      } else if (q.type === 'matching') {
+        const matches = selectedAnswers[q.id] as { [key: number]: number } || {}
+        let matchCorrect = true
+        Object.keys(q.matches).forEach(key => {
+          if (matches[parseInt(key)] !== q.matches[parseInt(key)]) {
+            matchCorrect = false
+          }
+        })
+        if (matchCorrect && Object.keys(matches).length === Object.keys(q.matches).length) {
+          correct++
+        }
       }
     })
     setScore(correct)
@@ -314,54 +363,106 @@ export default function ListeningPage() {
         <div className="border-t pt-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">Sorular</h3>
           <div className="space-y-4">
-            {exercise.questions.map((question) => (
-              <div key={question.id} className="border rounded-lg p-4">
-                <p className="font-medium text-gray-900 mb-3">{question.question}</p>
-                <div className="space-y-2">
-                  {question.options.map((option, index) => {
-                    const isSelected = selectedAnswers[question.id] === index
-                    const isCorrect = showResults && index === question.correct
-                    const isWrong = showResults && isSelected && index !== question.correct
-                    
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => !showResults && handleAnswerSelect(question.id, index)}
-                        disabled={showResults}
-                        className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                          isSelected
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        } ${
-                          isCorrect ? 'border-green-500 bg-green-50' : ''
-                        } ${
-                          isWrong ? 'border-red-500 bg-red-50' : ''
-                        } ${showResults ? 'cursor-default' : 'cursor-pointer'}`}
-                      >
-                        <div className="flex items-center space-x-2">
-                          {showResults && isCorrect && (
+            {exercise.questions.map((question) => {
+              if (question.type === 'multiple-choice') {
+                return (
+                  <div key={question.id} className="border rounded-lg p-4">
+                    <p className="font-medium text-gray-900 mb-3">{question.question}</p>
+                    <div className="space-y-2">
+                      {question.options.map((option, index) => {
+                        const isSelected = selectedAnswers[question.id] === index
+                        const isCorrect = showResults && index === question.correct
+                        const isWrong = showResults && isSelected && index !== question.correct
+                        
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => !showResults && handleAnswerSelect(question.id, index)}
+                            disabled={showResults}
+                            className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                              isSelected
+                                ? 'border-green-500 bg-green-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            } ${
+                              isCorrect ? 'border-green-500 bg-green-50' : ''
+                            } ${
+                              isWrong ? 'border-red-500 bg-red-50' : ''
+                            } ${showResults ? 'cursor-default' : 'cursor-pointer'}`}
+                          >
+                            <div className="flex items-center space-x-2">
+                              {showResults && isCorrect && (
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                              )}
+                              {showResults && isWrong && (
+                                <XCircle className="w-5 h-5 text-red-600" />
+                              )}
+                              <span className={showResults && isCorrect ? 'font-semibold text-green-700' : showResults && isWrong ? 'text-red-700' : 'text-gray-700'}>
+                                {option}
+                              </span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              } else if (question.type === 'matching') {
+                const matches = (selectedAnswers[question.id] as { [key: number]: number }) || {}
+                return (
+                  <div key={question.id} className="border rounded-lg p-4">
+                    <p className="font-medium text-gray-900 mb-3">{question.instruction}</p>
+                    <div className="space-y-3">
+                      {question.speakers.map((speaker, speakerIndex) => (
+                        <div key={speakerIndex} className="flex items-center space-x-3">
+                          <span className="font-medium text-gray-700 w-32">{speaker}</span>
+                          <select
+                            value={matches[speakerIndex] !== undefined ? matches[speakerIndex] : ''}
+                            onChange={(e) => !showResults && handleMatchingSelect(question.id, speakerIndex, parseInt(e.target.value))}
+                            disabled={showResults}
+                            className={`flex-1 p-2 border-2 rounded-lg ${
+                              showResults && matches[speakerIndex] === question.matches[speakerIndex]
+                                ? 'border-green-500 bg-green-50'
+                                : showResults && matches[speakerIndex] !== question.matches[speakerIndex]
+                                ? 'border-red-500 bg-red-50'
+                                : 'border-gray-200'
+                            }`}
+                          >
+                            <option value="">Seçiniz...</option>
+                            {question.statements.map((statement, statementIndex) => (
+                              <option key={statementIndex} value={statementIndex}>
+                                {statement}
+                              </option>
+                            ))}
+                          </select>
+                          {showResults && matches[speakerIndex] === question.matches[speakerIndex] && (
                             <CheckCircle className="w-5 h-5 text-green-600" />
                           )}
-                          {showResults && isWrong && (
+                          {showResults && matches[speakerIndex] !== undefined && matches[speakerIndex] !== question.matches[speakerIndex] && (
                             <XCircle className="w-5 h-5 text-red-600" />
                           )}
-                          <span className={showResults && isCorrect ? 'font-semibold text-green-700' : showResults && isWrong ? 'text-red-700' : 'text-gray-700'}>
-                            {option}
-                          </span>
                         </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
+                      ))}
+                    </div>
+                  </div>
+                )
+              }
+              return null
+            })}
           </div>
         </div>
 
         {!showResults ? (
           <button
             onClick={handleSubmit}
-            disabled={Object.keys(selectedAnswers).length !== exercise.questions.length}
+            disabled={exercise.questions.some(q => {
+              if (q.type === 'multiple-choice') {
+                return selectedAnswers[q.id] === undefined
+              } else if (q.type === 'matching') {
+                const matches = selectedAnswers[q.id] as { [key: number]: number } || {}
+                return Object.keys(matches).length !== q.speakers.length
+              }
+              return true
+            })}
             className="mt-6 w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-lg font-semibold hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cevapları Gönder

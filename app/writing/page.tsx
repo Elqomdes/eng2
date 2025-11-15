@@ -322,10 +322,35 @@ export default function WritingPage() {
                 </div>
 
                 <div className="space-y-4">
+                  {/* Content */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900">📄 İçerik</h4>
+                      <span className="text-sm font-bold text-purple-600">{evaluation.content.score}/5</span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2">{evaluation.content.assessment}</p>
+                    {evaluation.content.referenceQuality && (
+                      <p className="text-xs text-gray-600 mb-1">Referans Kalitesi: {evaluation.content.referenceQuality}</p>
+                    )}
+                    {evaluation.content.opinionQuality && (
+                      <p className="text-xs text-gray-600 mb-1">Görüş Kalitesi: {evaluation.content.opinionQuality}</p>
+                    )}
+                    {evaluation.content.summaryQuality && (
+                      <p className="text-xs text-gray-600 mb-1">Özet Kalitesi: {evaluation.content.summaryQuality}</p>
+                    )}
+                    {evaluation.content.connectionQuality && (
+                      <p className="text-xs text-gray-600 mb-1">Bağlantı Kalitesi: {evaluation.content.connectionQuality}</p>
+                    )}
+                  </div>
+
                   {/* Grammar */}
                   <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-900 mb-2">📝 Dilbilgisi</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900">📝 Dilbilgisi</h4>
+                      <span className="text-sm font-bold text-purple-600">{evaluation.grammar.score}/5</span>
+                    </div>
                     <p className="text-sm text-gray-700 mb-2">{evaluation.grammar.assessment}</p>
+                    <p className="text-xs text-gray-600 mb-2">Karmaşık Yapılar: {evaluation.grammar.complexStructures}</p>
                     {evaluation.grammar.errors.length > 0 && (
                       <div className="mt-2">
                         <p className="text-xs font-medium text-red-600 mb-1">Hatalar:</p>
@@ -340,24 +365,29 @@ export default function WritingPage() {
 
                   {/* Vocabulary */}
                   <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-900 mb-2">📚 Kelime Bilgisi</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900">📚 Kelime Bilgisi</h4>
+                      <span className="text-sm font-bold text-purple-600">{evaluation.vocabulary.score}/5</span>
+                    </div>
                     <p className="text-sm text-gray-700 mb-2">{evaluation.vocabulary.assessment}</p>
-                    {evaluation.vocabulary.strengths.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs font-medium text-green-600 mb-1">Güçlü Yönler:</p>
-                        <ul className="text-xs text-gray-600 space-y-1">
-                          {evaluation.vocabulary.strengths.map((strength, i) => (
-                            <li key={i}>✓ {strength}</li>
-                          ))}
-                        </ul>
-                      </div>
+                    <p className="text-xs text-gray-600 mb-2">Kelime Çeşitliliği: {evaluation.vocabulary.range}</p>
+                    {evaluation.vocabulary.collocationalExpressions && (
+                      <p className="text-xs text-gray-600 mb-2">Eşdizimli İfadeler: {evaluation.vocabulary.collocationalExpressions}</p>
+                    )}
+                    {evaluation.vocabulary.resourceUsage && (
+                      <p className="text-xs text-gray-600 mb-2">Kaynak Kullanımı: {evaluation.vocabulary.resourceUsage}</p>
                     )}
                   </div>
 
-                  {/* Structure */}
+                  {/* Coherence */}
                   <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-900 mb-2">📐 Yapı ve Organizasyon</h4>
-                    <p className="text-sm text-gray-700">{evaluation.structure.assessment}</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900">🔗 Tutarlılık ve Bağlantı</h4>
+                      <span className="text-sm font-bold text-purple-600">{evaluation.coherence.score}/5</span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2">{evaluation.coherence.assessment}</p>
+                    <p className="text-xs text-gray-600 mb-1">Akış: {evaluation.coherence.flow}</p>
+                    <p className="text-xs text-gray-600">Bağlantı Öğeleri: {evaluation.coherence.cohesiveDevices}</p>
                   </div>
 
                   {/* Overall Feedback */}
