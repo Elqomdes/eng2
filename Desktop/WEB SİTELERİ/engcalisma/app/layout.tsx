@@ -9,6 +9,46 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'English Learning Platform - İngilizce Çalışma Sitesi',
   description: 'Profesyonel İngilizce öğrenme platformu - Okuma, Yazma, Dinleme ve Konuşma pratikleri',
+  keywords: ['İngilizce öğrenme', 'English learning', 'İngilizce pratik', 'Okuma', 'Yazma', 'Dinleme', 'Konuşma', 'English practice'],
+  authors: [{ name: 'English Learning Platform' }],
+  creator: 'English Learning Platform',
+  publisher: 'English Learning Platform',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: process.env.NEXT_PUBLIC_SITE_URL 
+    ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
+    : undefined,
+  openGraph: {
+    title: 'English Learning Platform - İngilizce Çalışma Sitesi',
+    description: 'Profesyonel İngilizce öğrenme platformu - Okuma, Yazma, Dinleme ve Konuşma pratikleri',
+    type: 'website',
+    locale: 'tr_TR',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'English Learning Platform - İngilizce Çalışma Sitesi',
+    description: 'Profesyonel İngilizce öğrenme platformu - Okuma, Yazma, Dinleme ve Konuşma pratikleri',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
 }
 
 export default function RootLayout({

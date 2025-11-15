@@ -39,7 +39,9 @@ function ProgressProvider({ children }: { children: React.ReactNode }) {
   })
 
   useEffect(() => {
-    // Load from localStorage
+    // Load from localStorage (only on client side)
+    if (typeof window === 'undefined') return
+    
     try {
       const saved = localStorage.getItem('english-learning-progress')
       if (saved) {
@@ -101,7 +103,9 @@ function ProgressProvider({ children }: { children: React.ReactNode }) {
   }, [reading, writing, listening, speaking])
 
   useEffect(() => {
-    // Save to localStorage whenever key values change
+    // Save to localStorage whenever key values change (only on client side)
+    if (typeof window === 'undefined') return
+    
     try {
       const dataToSave = {
         totalCompleted: progress.totalCompleted,

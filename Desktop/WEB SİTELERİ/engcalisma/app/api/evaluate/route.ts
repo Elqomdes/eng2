@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
+// Runtime configuration for Vercel
+export const runtime = 'nodejs'
+export const maxDuration = 60 // 60 seconds max duration for Vercel
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   timeout: 60000, // 60 second timeout
