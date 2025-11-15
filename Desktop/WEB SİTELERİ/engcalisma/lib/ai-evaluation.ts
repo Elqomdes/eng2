@@ -70,6 +70,10 @@ export async function evaluateWriting(
   level: string
 ): Promise<WritingEvaluation> {
   try {
+    // Add timeout to fetch request
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
+
     const response = await fetch('/api/evaluate', {
       method: 'POST',
       headers: {
@@ -81,7 +85,10 @@ export async function evaluateWriting(
         prompt,
         level,
       }),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -95,9 +102,19 @@ export async function evaluateWriting(
     return data.evaluation
   } catch (error) {
     if (error instanceof Error) {
+      // Handle network errors specifically
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        throw new Error('İstek zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.')
+      }
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Network request failed')) {
+        throw new Error('Bağlantı hatası. Lütfen internet bağlantınızı veya VPN ayarlarınızı kontrol edin ve tekrar deneyin.')
+      }
+      if (error.message.includes('fetch')) {
+        throw new Error('Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.')
+      }
       throw error
     }
-    throw new Error('An unexpected error occurred during evaluation')
+    throw new Error('Değerlendirme sırasında beklenmeyen bir hata oluştu.')
   }
 }
 
@@ -107,6 +124,10 @@ export async function evaluateSpeaking(
   level: string
 ): Promise<SpeakingEvaluation> {
   try {
+    // Add timeout to fetch request
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
+
     const response = await fetch('/api/evaluate', {
       method: 'POST',
       headers: {
@@ -118,7 +139,10 @@ export async function evaluateSpeaking(
         prompt,
         level,
       }),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -132,9 +156,19 @@ export async function evaluateSpeaking(
     return data.evaluation
   } catch (error) {
     if (error instanceof Error) {
+      // Handle network errors specifically
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        throw new Error('İstek zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.')
+      }
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Network request failed')) {
+        throw new Error('Bağlantı hatası. Lütfen internet bağlantınızı veya VPN ayarlarınızı kontrol edin ve tekrar deneyin.')
+      }
+      if (error.message.includes('fetch')) {
+        throw new Error('Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.')
+      }
       throw error
     }
-    throw new Error('An unexpected error occurred during evaluation')
+    throw new Error('Değerlendirme sırasında beklenmeyen bir hata oluştu.')
   }
 }
 

@@ -3,6 +3,8 @@ import OpenAI from 'openai'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  timeout: 60000, // 60 second timeout
+  maxRetries: 2, // Retry up to 2 times on failure
 })
 
 export async function POST(request: NextRequest) {
@@ -150,6 +152,13 @@ Format your response as JSON with the following structure:
       response_format: { type: 'json_object' },
     })
 
+    if (!completion.choices || completion.choices.length === 0 || !completion.choices[0]?.message) {
+      return NextResponse.json(
+        { error: 'Invalid response from AI model' },
+        { status: 500 }
+      )
+    }
+
     const responseContent = completion.choices[0].message.content
     if (!responseContent) {
       return NextResponse.json(
@@ -183,7 +192,21 @@ Format your response as JSON with the following structure:
     
     // Handle specific OpenAI errors
     if (error instanceof Error) {
-      if (error.message.includes('API key')) {
+      // Network/Connection errors
+      if (error.message.includes('fetch') || 
+          error.message.includes('network') || 
+          error.message.includes('ECONNREFUSED') ||
+          error.message.includes('ENOTFOUND') ||
+          error.message.includes('ETIMEDOUT') ||
+          error.message.includes('timeout') ||
+          error.name === 'TypeError' && error.message.includes('fetch')) {
+        return NextResponse.json(
+          { error: 'Bağlantı hatası. Lütfen internet bağlantınızı veya VPN ayarlarınızı kontrol edin ve tekrar deneyin.' },
+          { status: 503 }
+        )
+      }
+      
+      if (error.message.includes('API key') || error.message.includes('authentication')) {
         return NextResponse.json(
           { error: 'Invalid OpenAI API key. Please check your configuration.' },
           { status: 401 }
@@ -197,8 +220,9 @@ Format your response as JSON with the following structure:
       }
     }
     
+    const errorMessage = error instanceof Error ? error.message : 'Değerlendirme başarısız oldu. Lütfen tekrar deneyin.'
     return NextResponse.json(
-      { error: error.message || 'Failed to evaluate. Please try again.' },
+      { error: errorMessage },
       { status: 500 }
     )
   }
