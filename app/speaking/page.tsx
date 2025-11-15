@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Mic, MicOff, Play, RotateCcw, Volume2, CheckCircle, Sparkles, Loader2, X, FileText, RefreshCw, Video, MessageSquare } from 'lucide-react'
+import { Mic, MicOff, RotateCcw, CheckCircle, Sparkles, Loader2, X, FileText, RefreshCw, Video, MessageSquare } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProgress } from '@/components/ProgressProvider'
 import { evaluateSpeaking, type SpeakingEvaluation } from '@/lib/ai-evaluation'
@@ -45,13 +45,7 @@ export default function SpeakingPage() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const { updateProgress, addTime, completeActivity } = useProgress()
 
-  // Generate new exercise on component mount
-  useEffect(() => {
-    generateNewExercise()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const generateNewExercise = async (selectedLevel?: string, selectedTaskType?: string) => {
+  const generateNewExercise = useCallback(async (selectedLevel?: string, selectedTaskType?: string) => {
     setIsGenerating(true)
     setError(null)
     setIsLoading(true)
@@ -61,20 +55,26 @@ export default function SpeakingPage() {
     setEvaluation(null)
     setTimeElapsed(0)
     setIsRecording(false)
-    setAudioUrl(null)
+    // Cleanup previous audio URL if exists
+    setAudioUrl(prevUrl => {
+      if (prevUrl) {
+        URL.revokeObjectURL(prevUrl)
+      }
+      return null
+    })
     setAudioChunks([])
     
-    // Cleanup previous audio
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl)
-    }
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      try {
-        mediaRecorder.stop()
-      } catch (error) {
-        console.error('Error stopping mediaRecorder:', error)
+    // Stop any active recording
+    setMediaRecorder(prevRecorder => {
+      if (prevRecorder && prevRecorder.state !== 'inactive') {
+        try {
+          prevRecorder.stop()
+        } catch (error) {
+          console.error('Error stopping mediaRecorder:', error)
+        }
       }
-    }
+      return null
+    })
 
     try {
       const response = await fetch('/api/speaking/generate', {
@@ -104,7 +104,13 @@ export default function SpeakingPage() {
       setIsLoading(false)
       setIsGenerating(false)
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Generate new exercise on component mount
+  useEffect(() => {
+    generateNewExercise()
+  }, [generateNewExercise])
 
   const generateTranscript = async (audioBlob: Blob) => {
     setIsGeneratingTranscript(true)
