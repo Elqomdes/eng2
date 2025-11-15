@@ -24,7 +24,7 @@ interface ProgressContextType {
 
 const ProgressContext = createContext<ProgressContextType | undefined>(undefined)
 
-function ProgressProvider({ children }: { children: React.ReactNode }) {
+export default function ProgressProvider({ children }: { children: React.ReactNode }) {
   const [progress, setProgress] = useState({
     totalCompleted: 0,
     totalTime: 0,
@@ -174,6 +174,4 @@ export function useProgress() {
   }
   return context
 }
-
-export default ProgressProvider
 
