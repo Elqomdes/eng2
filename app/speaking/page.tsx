@@ -199,6 +199,20 @@ export default function SpeakingPage() {
     }
   }
 
+  const stopRecording = useCallback(() => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive' && isRecording) {
+      try {
+        mediaRecorder.stop()
+        setIsRecording(false)
+      } catch (error) {
+        console.error('Error stopping recording:', error)
+        setIsRecording(false)
+      }
+    } else if (isRecording) {
+      setIsRecording(false)
+    }
+  }, [mediaRecorder, isRecording])
+
   if (isLoading && !currentExercise) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -232,20 +246,6 @@ export default function SpeakingPage() {
   if (!currentExercise) {
     return <div className="container mx-auto px-4 py-8">Yükleniyor...</div>
   }
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive' && isRecording) {
-      try {
-        mediaRecorder.stop()
-        setIsRecording(false)
-      } catch (error) {
-        console.error('Error stopping recording:', error)
-        setIsRecording(false)
-      }
-    } else if (isRecording) {
-      setIsRecording(false)
-    }
-  }, [mediaRecorder, isRecording])
 
   useEffect(() => {
     if (!currentExercise || !currentExercise.duration) return
