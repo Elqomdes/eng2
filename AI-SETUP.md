@@ -2,15 +2,46 @@
 
 Bu proje, yazma ve konuşma çalışmalarını değerlendirmek için OpenAI API kullanmaktadır.
 
+## 🎯 Mevcut Özellikler
+
+Sistem şu anda **yapay zeka ile otomatik değerlendirme** yapmaktadır:
+
+### ✅ Yazma Değerlendirmesi
+- Öğrencilerin yazdığı metinleri AI ile analiz eder
+- Dilbilgisi, kelime bilgisi, yapı ve organizasyonu değerlendirir
+- Detaylı geri bildirim ve iyileştirme önerileri sunar
+
+### ✅ Konuşma Değerlendirmesi
+- Öğrencilerin konuşma transkriptlerini AI ile analiz eder
+- Telaffuz, akıcılık, dilbilgisi ve kelime bilgisini değerlendirir
+- Pratik önerileri ve geliştirme alanlarını belirler
+
 ## Kurulum Adımları
 
 1. Proje kök dizininde `.env.local` dosyası oluşturun:
 
+**Windows (PowerShell):**
+```powershell
+New-Item -Path .env.local -ItemType File
+```
+
+**Mac/Linux:**
 ```bash
+touch .env.local
+```
+
+2. `.env.local` dosyasını açın ve API anahtarınızı ekleyin:
+
+```
 OPENAI_API_KEY=your_api_key_here
 ```
 
-2. API anahtarınızı `.env.local` dosyasına ekleyin.
+**Not:** API anahtarınızı `API-KEY-SETUP.md` dosyasından veya OpenAI dashboard'dan alabilirsiniz.
+
+**⚠️ ÖNEMLİ GÜVENLİK UYARISI:**
+- API anahtarınızı asla GitHub'a yüklemeyin
+- `.env.local` dosyası `.gitignore` içinde olduğu için otomatik olarak ignore edilir
+- API anahtarınızı kimseyle paylaşmayın
 
 3. Bağımlılıkları yükleyin:
 

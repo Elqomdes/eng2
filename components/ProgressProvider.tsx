@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
+type SkillType = 'reading' | 'writing' | 'listening' | 'speaking'
+
 interface ProgressContextType {
   progress: {
     totalCompleted: number
@@ -15,14 +17,14 @@ interface ProgressContextType {
       speaking: number
     }
   }
-  updateProgress: (skill: string, value: number) => void
+  updateProgress: (skill: SkillType, value: number) => void
   addTime: (minutes: number) => void
   completeActivity: () => void
 }
 
 const ProgressContext = createContext<ProgressContextType | undefined>(undefined)
 
-export function ProgressProvider({ children }: { children: React.ReactNode }) {
+function ProgressProvider({ children }: { children: React.ReactNode }) {
   const [progress, setProgress] = useState({
     totalCompleted: 0,
     totalTime: 0,
@@ -37,15 +39,82 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
   })
 
   useEffect(() => {
-    // Load from localStorage
-    const saved = localStorage.getItem('english-learning-progress')
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      // Calculate overall progress from saved data
-      const avg = Object.values(parsed.skills).reduce((a: number, b: number) => a + b, 0) / 4
-      setProgress({ ...parsed, overallProgress: Math.round(avg) })
+    // Load from MongoDB first, then fallback to localStorage (only on client side)
+    if (typeof window === 'undefined') return
+    
+    const loadProgress = async () => {
+      try {
+        // Try to load from MongoDB first
+        const response = await fetch('/api/progress?userId=default')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success && result.data) {
+            const data = result.data
+            const avg = Object.values(data.skills).reduce((a: number, b: number) => a + b, 0) / 4
+            setProgress({
+              totalCompleted: data.totalCompleted || 0,
+              totalTime: data.totalTime || 0,
+              overallProgress: data.overallProgress || Math.round(avg),
+              achievements: data.achievements || 0,
+              skills: {
+                reading: Math.max(0, Math.min(100, data.skills.reading || 0)),
+                writing: Math.max(0, Math.min(100, data.skills.writing || 0)),
+                listening: Math.max(0, Math.min(100, data.skills.listening || 0)),
+                speaking: Math.max(0, Math.min(100, data.skills.speaking || 0)),
+              },
+            })
+            // Also save to localStorage for offline access
+            localStorage.setItem('english-learning-progress', JSON.stringify(data))
+            return
+          }
+        }
+      } catch (error) {
+        console.error('Error loading progress from MongoDB:', error)
+      }
+
+      // Fallback to localStorage
+      try {
+        const saved = localStorage.getItem('english-learning-progress')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          // Validate and calculate overall progress from saved data
+          if (parsed && parsed.skills && typeof parsed.skills === 'object') {
+            const skills = parsed.skills as { reading: number; writing: number; listening: number; speaking: number }
+            const avg = Object.values(skills).reduce((a: number, b: number) => a + b, 0) / 4
+            setProgress({
+              totalCompleted: parsed.totalCompleted || 0,
+              totalTime: parsed.totalTime || 0,
+              overallProgress: Math.round(avg),
+              achievements: parsed.achievements || 0,
+              skills: {
+                reading: Math.max(0, Math.min(100, skills.reading || 0)),
+                writing: Math.max(0, Math.min(100, skills.writing || 0)),
+                listening: Math.max(0, Math.min(100, skills.listening || 0)),
+                speaking: Math.max(0, Math.min(100, skills.speaking || 0)),
+              },
+            })
+            // Sync to MongoDB in background
+            fetch('/api/progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: 'default',
+                ...parsed,
+              }),
+            }).catch(err => console.error('Error syncing to MongoDB:', err))
+          }
+        }
+      } catch (error) {
+        console.error('Error loading progress from localStorage:', error)
+        // If there's an error, start with default values
+      }
     }
+
+    loadProgress()
   }, [])
+
+  // Destructure skills for explicit dependencies
+  const { reading, writing, listening, speaking } = progress.skills
 
   useEffect(() => {
     // Calculate and update overall progress and check achievements
@@ -74,21 +143,42 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       }
       return { ...prev, overallProgress: newOverallProgress, achievements: newAchievements }
     })
-  }, [progress.skills.reading, progress.skills.writing, progress.skills.listening, progress.skills.speaking])
+  }, [reading, writing, listening, speaking])
 
   useEffect(() => {
-    // Save to localStorage whenever key values change
-    const dataToSave = {
-      totalCompleted: progress.totalCompleted,
-      totalTime: progress.totalTime,
-      overallProgress: progress.overallProgress,
-      achievements: progress.achievements,
-      skills: progress.skills
-    }
-    localStorage.setItem('english-learning-progress', JSON.stringify(dataToSave))
-  }, [progress.totalCompleted, progress.totalTime, progress.overallProgress, progress.achievements, progress.skills.reading, progress.skills.writing, progress.skills.listening, progress.skills.speaking])
+    // Save to localStorage and MongoDB whenever key values change (only on client side)
+    if (typeof window === 'undefined') return
+    
+    try {
+      const dataToSave = {
+        totalCompleted: progress.totalCompleted,
+        totalTime: progress.totalTime,
+        overallProgress: progress.overallProgress,
+        achievements: progress.achievements,
+        skills: progress.skills
+      }
+      // Save to localStorage for immediate access
+      localStorage.setItem('english-learning-progress', JSON.stringify(dataToSave))
+      
+      // Save to MongoDB in background (debounced)
+      const timeoutId = setTimeout(() => {
+        fetch('/api/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: 'default',
+            ...dataToSave,
+          }),
+        }).catch(err => console.error('Error saving progress to MongoDB:', err))
+      }, 1000) // Debounce: wait 1 second before saving to DB
 
-  const updateProgress = (skill: string, value: number) => {
+      return () => clearTimeout(timeoutId)
+    } catch (error) {
+      console.error('Error saving progress:', error)
+    }
+  }, [progress.totalCompleted, progress.totalTime, progress.overallProgress, progress.achievements, reading, writing, listening, speaking])
+
+  const updateProgress = (skill: SkillType, value: number) => {
     setProgress(prev => ({
       ...prev,
       skills: {
@@ -143,3 +233,7 @@ export function useProgress() {
   return context
 }
 
+// Export ProgressProvider - default export first for better TypeScript compatibility
+export default ProgressProvider
+export { ProgressProvider }
+export type { SkillType }

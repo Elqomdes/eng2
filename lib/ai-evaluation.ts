@@ -1,23 +1,34 @@
+'use client'
+
 export interface WritingEvaluation {
   score: number
+  content: {
+    score: number
+    assessment: string
+    referenceQuality?: string
+    opinionQuality?: string
+    summaryQuality?: string
+    connectionQuality?: string
+  }
   grammar: {
+    score: number
     assessment: string
     errors: string[]
-    examples: string[]
+    complexStructures: string
   }
   vocabulary: {
+    score: number
     assessment: string
-    strengths: string[]
+    range: string
+    collocationalExpressions?: string
+    resourceUsage?: string
     suggestions: string[]
   }
-  structure: {
+  coherence: {
+    score: number
     assessment: string
-    strengths: string[]
-    improvements: string[]
-  }
-  content: {
-    assessment: string
-    relevance: string
+    flow: string
+    cohesiveDevices: string
   }
   overall: {
     strengths: string[]
@@ -29,32 +40,34 @@ export interface WritingEvaluation {
 
 export interface SpeakingEvaluation {
   score: number
-  pronunciation: {
+  taskCompletion: {
+    score: number
     assessment: string
-    strengths: string[]
-    issues: string[]
+    contentDevelopment?: string
+    organization?: string
+    summaryQuality?: string
+    discussionQuality?: string
+  }
+  grammar: {
+    score: number
+    assessment: string
+    errors: string[]
+    complexStructures: string
+  }
+  vocabulary: {
+    score: number
+    assessment: string
+    range: string
+    accuracy?: string
+    videoVocabulary?: string
     suggestions: string[]
   }
   fluency: {
+    score: number
     assessment: string
     pace: string
     hesitations: string
-    suggestions: string[]
-  }
-  grammar: {
-    assessment: string
-    errors: string[]
-    suggestions: string[]
-  }
-  vocabulary: {
-    assessment: string
-    strengths: string[]
-    suggestions: string[]
-  }
-  content: {
-    assessment: string
-    relevance: string
-    ideas: string
+    pronunciation: string
   }
   overall: {
     strengths: string[]
@@ -70,6 +83,10 @@ export async function evaluateWriting(
   level: string
 ): Promise<WritingEvaluation> {
   try {
+    // Add timeout to fetch request
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
+
     const response = await fetch('/api/evaluate', {
       method: 'POST',
       headers: {
@@ -81,7 +98,10 @@ export async function evaluateWriting(
         prompt,
         level,
       }),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -95,9 +115,19 @@ export async function evaluateWriting(
     return data.evaluation
   } catch (error) {
     if (error instanceof Error) {
+      // Handle network errors specifically
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        throw new Error('İstek zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.')
+      }
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Network request failed')) {
+        throw new Error('Bağlantı hatası. Lütfen internet bağlantınızı veya VPN ayarlarınızı kontrol edin ve tekrar deneyin.')
+      }
+      if (error.message.includes('fetch')) {
+        throw new Error('Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.')
+      }
       throw error
     }
-    throw new Error('An unexpected error occurred during evaluation')
+    throw new Error('Değerlendirme sırasında beklenmeyen bir hata oluştu.')
   }
 }
 
@@ -107,6 +137,10 @@ export async function evaluateSpeaking(
   level: string
 ): Promise<SpeakingEvaluation> {
   try {
+    // Add timeout to fetch request
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
+
     const response = await fetch('/api/evaluate', {
       method: 'POST',
       headers: {
@@ -118,11 +152,21 @@ export async function evaluateSpeaking(
         prompt,
         level,
       }),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || `Evaluation failed with status ${response.status}`)
+      const errorMessage = errorData.error || `Evaluation failed with status ${response.status}`
+      
+      // Check for 429 status code
+      if (response.status === 429 || errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('kotası')) {
+        throw new Error('OpenAI API kotası aşıldı. Lütfen OpenAI hesabınızın faturalama ayarlarını kontrol edin ve tekrar deneyin.')
+      }
+      
+      throw new Error(errorMessage)
     }
 
     const data = await response.json()
@@ -132,9 +176,19 @@ export async function evaluateSpeaking(
     return data.evaluation
   } catch (error) {
     if (error instanceof Error) {
+      // Handle network errors specifically
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        throw new Error('İstek zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.')
+      }
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Network request failed')) {
+        throw new Error('Bağlantı hatası. Lütfen internet bağlantınızı veya VPN ayarlarınızı kontrol edin ve tekrar deneyin.')
+      }
+      if (error.message.includes('fetch')) {
+        throw new Error('Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.')
+      }
       throw error
     }
-    throw new Error('An unexpected error occurred during evaluation')
+    throw new Error('Değerlendirme sırasında beklenmeyen bir hata oluştu.')
   }
 }
 
