@@ -51,7 +51,7 @@ function ProgressProvider({ children }: { children: React.ReactNode }) {
         if (response.ok) {
           const result = await response.json() as { success: boolean; data?: ProgressData }
           if (result.success && result.data) {
-            const data = result.data as ProgressData
+            const data: ProgressData = result.data
             const { skills } = data
             const avg = (skills.reading + skills.writing + skills.listening + skills.speaking) / 4
             setProgress({
