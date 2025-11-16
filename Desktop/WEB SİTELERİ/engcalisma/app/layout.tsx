@@ -3,7 +3,8 @@ import { Inter } from 'next/font/google'
 import React from 'react'
 import './globals.css'
 import Navigation from '@/components/Navigation'
-import { ProgressProvider } from '@/components/ProgressProvider'
+import Footer from '@/components/Footer'
+import ProgressProvider from '@/components/ProgressProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -44,6 +45,10 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
+  },
 }
 
 export const viewport = {
@@ -61,10 +66,13 @@ export default function RootLayout({
     <html lang="tr">
       <body className={inter.className}>
         <ProgressProvider>
-          <Navigation />
-          <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-            {children}
-          </main>
+          <div className="flex flex-col min-h-screen">
+            <Navigation />
+            <main className="flex-grow bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+              {children}
+            </main>
+            <Footer />
+          </div>
         </ProgressProvider>
       </body>
     </html>

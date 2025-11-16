@@ -65,11 +65,8 @@ npm install
 ```
 
 3. **Ortam değişkenlerini ayarlayın:**
-```bash
-cp .env.example .env.local
-```
 
-`.env.local` dosyasını oluşturun ve API anahtarınızı ekleyin:
+`env.example` dosyasını referans alarak `.env.local` dosyasını oluşturun ve API anahtarınızı ekleyin:
 
 ```
 OPENAI_API_KEY=your_api_key_here
