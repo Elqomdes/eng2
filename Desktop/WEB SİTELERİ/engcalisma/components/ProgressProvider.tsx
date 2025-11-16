@@ -112,28 +112,50 @@ function ProgressProvider({ children }: { children: React.ReactNode }) {
           // Validate and calculate overall progress from saved data
           if (parsed && parsed.skills && typeof parsed.skills === 'object') {
             const skills = parsed.skills as { reading: number; writing: number; listening: number; speaking: number }
-            const avg = (skills.reading + skills.writing + skills.listening + skills.speaking) / 4
-            setProgress({
-              totalCompleted: parsed.totalCompleted || 0,
-              totalTime: parsed.totalTime || 0,
-              overallProgress: Math.round(avg),
-              achievements: parsed.achievements || 0,
-              skills: {
-                reading: Math.max(0, Math.min(100, skills.reading || 0)),
-                writing: Math.max(0, Math.min(100, skills.writing || 0)),
-                listening: Math.max(0, Math.min(100, skills.listening || 0)),
-                speaking: Math.max(0, Math.min(100, skills.speaking || 0)),
-              },
-            })
-            // Sync to MongoDB in background
-            fetch('/api/progress', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userId: 'default',
-                ...parsed,
-              }),
-            }).catch(err => console.error('Error syncing to MongoDB:', err))
+            // Validate skills are numbers
+            if (
+              typeof skills.reading === 'number' &&
+              typeof skills.writing === 'number' &&
+              typeof skills.listening === 'number' &&
+              typeof skills.speaking === 'number'
+            ) {
+              const avg = (skills.reading + skills.writing + skills.listening + skills.speaking) / 4
+              setProgress({
+                totalCompleted: typeof parsed.totalCompleted === 'number' ? parsed.totalCompleted : 0,
+                totalTime: typeof parsed.totalTime === 'number' ? parsed.totalTime : 0,
+                overallProgress: Math.round(avg),
+                achievements: typeof parsed.achievements === 'number' ? parsed.achievements : 0,
+                skills: {
+                  reading: Math.max(0, Math.min(100, skills.reading || 0)),
+                  writing: Math.max(0, Math.min(100, skills.writing || 0)),
+                  listening: Math.max(0, Math.min(100, skills.listening || 0)),
+                  speaking: Math.max(0, Math.min(100, skills.speaking || 0)),
+                },
+              })
+              // Sync to MongoDB in background (non-blocking)
+              fetch('/api/progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId: 'default',
+                  totalCompleted: typeof parsed.totalCompleted === 'number' ? parsed.totalCompleted : 0,
+                  totalTime: typeof parsed.totalTime === 'number' ? parsed.totalTime : 0,
+                  overallProgress: Math.round(avg),
+                  achievements: typeof parsed.achievements === 'number' ? parsed.achievements : 0,
+                  skills: {
+                    reading: Math.max(0, Math.min(100, skills.reading || 0)),
+                    writing: Math.max(0, Math.min(100, skills.writing || 0)),
+                    listening: Math.max(0, Math.min(100, skills.listening || 0)),
+                    speaking: Math.max(0, Math.min(100, skills.speaking || 0)),
+                  },
+                }),
+              }).catch(err => {
+                // Silently fail - localStorage is the source of truth
+                if (process.env.NODE_ENV === 'development') {
+                  console.error('Error syncing to MongoDB:', err)
+                }
+              })
+            }
           }
         }
       } catch (error) {
