@@ -891,34 +891,6 @@ export default function SpeakingPage() {
                   </div>
                 )}
 
-                {/* Vocabulary */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">📚 Kelime Bilgisi</h4>
-                    <span className="text-sm font-bold text-orange-600">{evaluation.vocabulary.score}/5</span>
-                  </div>
-                  <p className="text-sm text-gray-700 mb-2">{evaluation.vocabulary.assessment}</p>
-                  <p className="text-xs text-gray-600 mb-1">Kelime Çeşitliliği: {evaluation.vocabulary.range}</p>
-                  {evaluation.vocabulary.accuracy && (
-                    <p className="text-xs text-gray-600 mb-1">Doğruluk: {evaluation.vocabulary.accuracy}</p>
-                  )}
-                  {evaluation.vocabulary.videoVocabulary && (
-                    <p className="text-xs text-gray-600 mb-1">Video Kelimeleri: {evaluation.vocabulary.videoVocabulary}</p>
-                  )}
-                </div>
-
-                {/* Fluency & Pronunciation */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">💬 Akıcılık ve Telaffuz</h4>
-                    <span className="text-sm font-bold text-orange-600">{evaluation.fluency.score}/5</span>
-                  </div>
-                  <p className="text-sm text-gray-700 mb-2">{evaluation.fluency.assessment}</p>
-                  <p className="text-xs text-gray-600 mb-1">Hız: {evaluation.fluency.pace}</p>
-                  <p className="text-xs text-gray-600 mb-1">Tereddütler: {evaluation.fluency.hesitations}</p>
-                  <p className="text-xs text-gray-600">Telaffuz: {evaluation.fluency.pronunciation}</p>
-                </div>
-
                 {/* Overall Feedback */}
                 {evaluation.overall && (
                   <div className="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200 rounded-lg p-4">
