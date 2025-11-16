@@ -17,6 +17,30 @@ interface ProgressData {
   }
 }
 
+interface ProgressApiResponse {
+  success: boolean
+  data?: ProgressData
+  error?: string
+}
+
+// Type guard function to validate ProgressData
+function isProgressData(data: unknown): data is ProgressData {
+  if (!data || typeof data !== 'object') return false
+  const obj = data as Record<string, unknown>
+  return (
+    typeof obj.totalCompleted === 'number' &&
+    typeof obj.totalTime === 'number' &&
+    typeof obj.overallProgress === 'number' &&
+    typeof obj.achievements === 'number' &&
+    obj.skills &&
+    typeof obj.skills === 'object' &&
+    typeof (obj.skills as Record<string, unknown>).reading === 'number' &&
+    typeof (obj.skills as Record<string, unknown>).writing === 'number' &&
+    typeof (obj.skills as Record<string, unknown>).listening === 'number' &&
+    typeof (obj.skills as Record<string, unknown>).speaking === 'number'
+  )
+}
+
 interface ProgressContextType {
   progress: ProgressData
   updateProgress: (skill: SkillType, value: number) => void
@@ -49,8 +73,8 @@ function ProgressProvider({ children }: { children: React.ReactNode }) {
         // Try to load from MongoDB first
         const response = await fetch('/api/progress?userId=default')
         if (response.ok) {
-          const result = await response.json() as { success: boolean; data?: ProgressData }
-          if (result.success && result.data) {
+          const result = (await response.json()) as ProgressApiResponse
+          if (result.success && result.data && isProgressData(result.data)) {
             const data: ProgressData = result.data
             const { skills } = data
             const avg = (skills.reading + skills.writing + skills.listening + skills.speaking) / 4
