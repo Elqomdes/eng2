@@ -20,11 +20,13 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: process.env.NEXT_PUBLIC_SITE_URL 
-    ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
-    : (process.env.VERCEL_URL 
-      ? new URL(`https://${process.env.VERCEL_URL}`)
-      : undefined),
+  ...(process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
+    ? {
+        metadataBase: process.env.NEXT_PUBLIC_SITE_URL
+          ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
+          : new URL(`https://${process.env.VERCEL_URL}`),
+      }
+    : {}),
   openGraph: {
     title: 'English Learning Platform - İngilizce Çalışma Sitesi',
     description: 'Profesyonel İngilizce öğrenme platformu - Okuma, Yazma, Dinleme ve Konuşma pratikleri',
