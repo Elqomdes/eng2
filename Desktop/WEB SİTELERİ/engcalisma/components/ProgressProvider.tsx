@@ -51,8 +51,9 @@ function ProgressProvider({ children }: { children: React.ReactNode }) {
         if (response.ok) {
           const result = await response.json() as { success: boolean; data?: ProgressData }
           if (result.success && result.data) {
-            const data: ProgressData = result.data
-            const avg = Object.values(data.skills).reduce((a: number, b: number) => a + b, 0) / 4
+            const data = result.data as ProgressData
+            const { skills } = data
+            const avg = (skills.reading + skills.writing + skills.listening + skills.speaking) / 4
             setProgress({
               totalCompleted: data.totalCompleted || 0,
               totalTime: data.totalTime || 0,
@@ -82,7 +83,7 @@ function ProgressProvider({ children }: { children: React.ReactNode }) {
           // Validate and calculate overall progress from saved data
           if (parsed && parsed.skills && typeof parsed.skills === 'object') {
             const skills = parsed.skills as { reading: number; writing: number; listening: number; speaking: number }
-            const avg = Object.values(skills).reduce((a: number, b: number) => a + b, 0) / 4
+            const avg = (skills.reading + skills.writing + skills.listening + skills.speaking) / 4
             setProgress({
               totalCompleted: parsed.totalCompleted || 0,
               totalTime: parsed.totalTime || 0,
@@ -121,13 +122,13 @@ function ProgressProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Calculate and update overall progress and check achievements
     setProgress(prev => {
-      const avg = Object.values(prev.skills).reduce((a, b) => a + b, 0) / 4
+      const avg = (prev.skills.reading + prev.skills.writing + prev.skills.listening + prev.skills.speaking) / 4
       const newOverallProgress = Math.round(avg)
       
       let newAchievements = prev.achievements
       
       // Check skill-based achievements (100% in any skill)
-      const allSkillsAt100 = Object.values(prev.skills).every(skill => skill >= 100)
+      const allSkillsAt100 = prev.skills.reading >= 100 && prev.skills.writing >= 100 && prev.skills.listening >= 100 && prev.skills.speaking >= 100
       if (allSkillsAt100 && prev.achievements < 200) {
         newAchievements = 200 // Master achievement
       }
