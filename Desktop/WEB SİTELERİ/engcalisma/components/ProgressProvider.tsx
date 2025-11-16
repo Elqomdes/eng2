@@ -52,7 +52,7 @@ function ProgressProvider({ children }: { children: React.ReactNode }) {
           const result = await response.json() as { success: boolean; data?: ProgressData }
           if (result.success && result.data) {
             const data = result.data
-            const avg = Object.values(data.skills).reduce((a: number, b: number) => a + b, 0) / 4
+            const avg = (Object.values(data.skills) as number[]).reduce((a: number, b: number) => a + b, 0) / 4
             setProgress({
               totalCompleted: data.totalCompleted || 0,
               totalTime: data.totalTime || 0,
