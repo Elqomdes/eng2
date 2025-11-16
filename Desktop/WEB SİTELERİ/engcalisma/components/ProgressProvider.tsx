@@ -27,17 +27,22 @@ interface ProgressApiResponse {
 function isProgressData(data: unknown): data is ProgressData {
   if (!data || typeof data !== 'object') return false
   const obj = data as Record<string, unknown>
+  if (
+    typeof obj.totalCompleted !== 'number' ||
+    typeof obj.totalTime !== 'number' ||
+    typeof obj.overallProgress !== 'number' ||
+    typeof obj.achievements !== 'number' ||
+    !obj.skills ||
+    typeof obj.skills !== 'object'
+  ) {
+    return false
+  }
+  const skills = obj.skills as Record<string, unknown>
   return (
-    typeof obj.totalCompleted === 'number' &&
-    typeof obj.totalTime === 'number' &&
-    typeof obj.overallProgress === 'number' &&
-    typeof obj.achievements === 'number' &&
-    obj.skills &&
-    typeof obj.skills === 'object' &&
-    typeof (obj.skills as Record<string, unknown>).reading === 'number' &&
-    typeof (obj.skills as Record<string, unknown>).writing === 'number' &&
-    typeof (obj.skills as Record<string, unknown>).listening === 'number' &&
-    typeof (obj.skills as Record<string, unknown>).speaking === 'number'
+    typeof skills.reading === 'number' &&
+    typeof skills.writing === 'number' &&
+    typeof skills.listening === 'number' &&
+    typeof skills.speaking === 'number'
   )
 }
 
